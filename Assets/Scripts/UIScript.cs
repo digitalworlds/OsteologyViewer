@@ -12,14 +12,20 @@ public class UIScript : MonoBehaviour
     private List<GameObject> savedViews; // This should be initialized
     private Transform viewsTransform; // This is a local variable, not needed as a class field
 
+    private Animator animator;
+    private bool menu;
+
     void Start()
     {
         UserInput = GameObject.Find("Manager").GetComponent<UserInput>();
+        animator = GameObject.Find("SideMenu").GetComponent<Animator>();
 
         // Initialize the list to avoid NullReferenceException
         savedViews = new List<GameObject>();
 
         numOfSavedViews = -1;
+        
+        menu = false;
 
         // Find the parent object "Views" and get its children
         viewsTransform = GameObject.Find("Views").transform;
@@ -37,7 +43,7 @@ public class UIScript : MonoBehaviour
         }
     }
 
-    void Update()
+    public void Update()
     {
         ChangeOpacity();
     }
@@ -50,11 +56,6 @@ public class UIScript : MonoBehaviour
     public void ZoomOut()
     {
         UserInput.ZoomOut();
-    }
-
-    public void OpenMenu()
-    {
-        // Open menu logic (if you have any)
     }
 
     public void ResetView()
@@ -96,5 +97,27 @@ public class UIScript : MonoBehaviour
     {
         // Log the name of the button that was clicked
         UserInput.OpenSavedView(int.Parse(viewChoice.name));
+    }
+
+    public void SelectMenuButton()
+    {
+        if(!menu)
+        {
+            OpenSideMenu();
+        }
+        else{
+            CloseSideMenu();
+        }
+    }
+
+    private void OpenSideMenu()
+    {
+        animator.SetTrigger("OpenMenu");
+        menu = true;
+    }
+    private void CloseSideMenu()
+    {
+        animator.SetTrigger("CloseMenu");
+        menu = false;
     }
 }
