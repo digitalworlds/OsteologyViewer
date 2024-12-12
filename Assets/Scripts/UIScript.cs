@@ -50,6 +50,7 @@ public class UIScript : MonoBehaviour
     public void Update()
     {
         titleText.text = UserInput.Name;
+        SelectPart();
         ChangeOpacity();
     }
 
@@ -126,5 +127,34 @@ public class UIScript : MonoBehaviour
     {
         animator.SetTrigger("Move"); // Trigger the closing animation
         menu = false;  // Set the menu state to closed
+    }
+
+    void SelectPart()
+    {
+        // Step 1: Get the mouse position on screen
+        Vector3 mousePosition = Input.mousePosition;
+        
+        // Debug: Check if the mouse position is within the screen bounds
+        if (mousePosition.x < 0 || mousePosition.x > Screen.width || mousePosition.y < 0 || mousePosition.y > Screen.height)
+        {
+            Debug.LogWarning("Mouse is outside the screen bounds: " + mousePosition);
+            return;
+        }
+
+        // Step 2: Create a ray from the camera through the mouse position
+        // For orthographic cameras, the ray is cast straight, so we can just use the mouse position
+        Ray ray = Camera.main.ScreenPointToRay(mousePosition);
+
+        // Step 3: Perform the raycast
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, Mathf.Infinity))
+        {
+            // Step 4: If we hit something, output the name of the object
+            GameObject hitObject = hit.collider.gameObject;
+            Debug.Log("Hit object: " + hitObject.name);
+
+            // Optionally, do something with the selected object
+            hitObject.GetComponent<Renderer>().material.color = Color.red;
+        }
     }
 }

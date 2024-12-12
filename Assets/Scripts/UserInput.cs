@@ -18,6 +18,8 @@ public class UserInput : MonoBehaviour
     private Camera CameraComponent;
     private float Zoom;
 
+    private GameObject selectedPart;
+
     // List of saved views (each saved view stores position, rotation, and field of view)
     private List<SavedView> SavedViews = new List<SavedView>();
 
@@ -49,11 +51,11 @@ public class UserInput : MonoBehaviour
         }
 
         float scrollInput = Input.GetAxis("Mouse ScrollWheel"); // Get scroll input
-        if (scrollInput > 0f)
+        if (scrollInput > 0f && Zoom !> 0f)
         {
             ZoomIn();
         }
-        else if (scrollInput < 0f)
+        else if (scrollInput < 0f && Zoom !< 10f)
         {
             ZoomOut();
         }
@@ -72,15 +74,15 @@ public class UserInput : MonoBehaviour
     public void ZoomIn()
     {
         Zoom--;
-        Zoom = Mathf.Clamp(Zoom, 9f, 80f); // Ensure Zoom is within the valid range
-        CameraComponent.fieldOfView = Zoom;
+        Zoom = Mathf.Clamp(Zoom, 0f, 10f); // Ensure Zoom is within the valid range
+        CameraComponent.orthographicSize = Zoom;
     }
 
     public void ZoomOut()
     {
         Zoom++;
-        Zoom = Mathf.Clamp(Zoom, 9f, 80f); // Ensure Zoom is within the valid range
-        CameraComponent.fieldOfView = Zoom;
+        Zoom = Mathf.Clamp(Zoom, 0f, 10f); // Ensure Zoom is within the valid range
+        CameraComponent.orthographicSize = Zoom;
     }
 
     void RotateModel()
@@ -171,6 +173,11 @@ public class UserInput : MonoBehaviour
 
         // Optionally, reset the local position if you want to keep it relative to the parent
         instantiatedModel.transform.localPosition = Vector3.zero;
+    }
+
+    public void SetSelectedModel(GameObject SelectedPart)
+    {
+        selectedPart = SelectedPart;
     }
 }
 
