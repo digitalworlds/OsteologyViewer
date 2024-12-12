@@ -8,6 +8,8 @@ public class UserInput : MonoBehaviour
     public float movementSpeed = 0.2f; // Movement speed
     public float defaultZoom;
 
+    public string Name;
+
     private Vector3 lastMousePosition;
     private bool isMiddleClickPressed = false;
 
@@ -26,6 +28,8 @@ public class UserInput : MonoBehaviour
         Model = GameObject.Find("Model");
         Camera = GameObject.Find("Main Camera");
         CameraComponent = Camera.GetComponent<Camera>(); // Get the Camera component
+
+        LoadModel(Name);
     }
 
     void Update()
@@ -153,6 +157,21 @@ public class UserInput : MonoBehaviour
             CameraComponent.fieldOfView = savedView.FieldOfView;
         }
     }
+
+    public void LoadModel(string Name)
+    {
+        // Load the model prefab from the Resources folder
+        GameObject modelPrefab = Resources.Load<GameObject>("Prefabs/" + Name + "/" + Name);
+
+        // Instantiate the model at the origin with the prefab's rotation
+        GameObject instantiatedModel = Instantiate(modelPrefab, new Vector3(0, 0, 0), modelPrefab.transform.rotation);
+
+        // Set the parent of the instantiated model to 'Model'
+        instantiatedModel.transform.SetParent(Model.transform);
+
+        // Optionally, reset the local position if you want to keep it relative to the parent
+        instantiatedModel.transform.localPosition = Vector3.zero;
+    }
 }
 
 // Class to store the position, rotation, and field of view
@@ -171,3 +190,5 @@ public class SavedView
         FieldOfView = fieldOfView;
     }
 }
+
+

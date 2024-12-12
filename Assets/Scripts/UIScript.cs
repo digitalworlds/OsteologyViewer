@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,6 +8,7 @@ public class UIScript : MonoBehaviour
 {
     private UserInput UserInput;
     private Slider opacitySlider; // Slider for opacity adjustment
+    private TextMeshProUGUI titleText; 
 
     private int numOfSavedViews;
     private List<GameObject> savedViews; // This should be initialized
@@ -14,11 +16,13 @@ public class UIScript : MonoBehaviour
 
     private Animator animator;
     private bool menu;
+    
 
     void Start()
     {
         UserInput = GameObject.Find("Manager").GetComponent<UserInput>();
         animator = GameObject.Find("SideMenu").GetComponent<Animator>();
+        titleText = GameObject.Find("Title").GetComponent<TextMeshProUGUI>();
 
         // Initialize the list to avoid NullReferenceException
         savedViews = new List<GameObject>();
@@ -45,6 +49,7 @@ public class UIScript : MonoBehaviour
 
     public void Update()
     {
+        titleText.text = UserInput.Name;
         ChangeOpacity();
     }
 
@@ -101,23 +106,25 @@ public class UIScript : MonoBehaviour
 
     public void SelectMenuButton()
     {
-        if(!menu)
+        if (!menu)
         {
             OpenSideMenu();
         }
-        else{
+        else
+        {
             CloseSideMenu();
         }
     }
 
     private void OpenSideMenu()
     {
-        animator.SetTrigger("OpenMenu");
-        menu = true;
+        animator.SetTrigger("Move");  // Trigger the opening animation
+        menu = true;  // Set the menu state to open
     }
+
     private void CloseSideMenu()
     {
-        animator.SetTrigger("CloseMenu");
-        menu = false;
+        animator.SetTrigger("Move"); // Trigger the closing animation
+        menu = false;  // Set the menu state to closed
     }
 }
