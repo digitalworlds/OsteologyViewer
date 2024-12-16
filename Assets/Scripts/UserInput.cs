@@ -23,7 +23,7 @@ public class UserInput : MonoBehaviour
     // List of saved views (each saved view stores position, rotation, and field of view)
     private List<SavedView> SavedViews = new List<SavedView>();
 
-    void Start()
+    public void Start()
     {
         Zoom = defaultZoom;
 
@@ -32,9 +32,10 @@ public class UserInput : MonoBehaviour
         CameraComponent = Camera.GetComponent<Camera>(); // Get the Camera component
 
         LoadModel(Name);
+        selectedPart = Model.transform.GetChild(0).gameObject; 
     }
 
-    void Update()
+    public void Update()
     {
         // Check for middle mouse button press
         if (Input.GetMouseButtonDown(1)) // 1 refers to the middle mouse button
@@ -48,6 +49,11 @@ public class UserInput : MonoBehaviour
         {
             isMiddleClickPressed = false;
             Cursor.visible = true;
+        }
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            SelectPart();
         }
 
         float scrollInput = Input.GetAxis("Mouse ScrollWheel"); // Get scroll input
@@ -74,14 +80,14 @@ public class UserInput : MonoBehaviour
     public void ZoomIn()
     {
         Zoom--;
-        Zoom = Mathf.Clamp(Zoom, 0f, 10f); // Ensure Zoom is within the valid range
+        Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Ensure Zoom is within the valid range
         CameraComponent.orthographicSize = Zoom;
     }
 
     public void ZoomOut()
     {
         Zoom++;
-        Zoom = Mathf.Clamp(Zoom, 0f, 10f); // Ensure Zoom is within the valid range
+        Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Ensure Zoom is within the valid range
         CameraComponent.orthographicSize = Zoom;
     }
 
@@ -130,9 +136,9 @@ public class UserInput : MonoBehaviour
         Model.transform.rotation = Quaternion.identity;
     }
 
-    public GameObject getCurrentModel()
+    public GameObject getCurrentPart()
     {
-        return Model;
+        return selectedPart;
     }
 
     // Method to save the current view (position, rotation, and field of view)
@@ -173,12 +179,47 @@ public class UserInput : MonoBehaviour
 
         // Optionally, reset the local position if you want to keep it relative to the parent
         instantiatedModel.transform.localPosition = Vector3.zero;
+
+        foreach (Transform child in instantiatedModel.transform)
+        {
+            // Add a MeshCollider to the child if it has a MeshFilter (which indicates it has a mesh)
+            MeshFilter meshFilter = child.GetComponent<MeshFilter>();
+            if (meshFilter != null)
+            {
+                // Ensure the child doesn't already have a MeshCollider
+                if (child.GetComponent<MeshCollider>() == null)
+                {
+                    // Add a MeshCollider to the child
+                    MeshCollider meshCollider = child.gameObject.AddComponent<MeshCollider>();
+                    
+                    // // Optional: You can set the collider to be convex if needed (depending on physics)
+                    // meshCollider.convex = true;
+                }
+            }
+        }
     }
 
-    public void SetSelectedModel(GameObject SelectedPart)
+    void SelectPart()
     {
-        selectedPart = SelectedPart;
+        // Step 1: Get the mouse position on screen
+        Vector3 mousePosition = Input.mousePosition;
+
+        // Step 2: Convert mouse position to a ray from the camera to the world space
+        Ray ray = Camera.GetComponent<Camera>().ScreenPointToRay(mousePosition);
+
+        // Step 3: Perform the raycast
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, Mathf.Infinity))
+        {
+            // Step 4: If we hit something, output the name of the object
+            GameObject hitObject = hit.collider.gameObject;
+            Debug.Log("Hit object: " + hitObject.name);
+
+            selectedPart = hitObject;
+        }
     }
+
+
 }
 
 // Class to store the position, rotation, and field of view
