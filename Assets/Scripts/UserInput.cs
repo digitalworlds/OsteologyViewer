@@ -1,5 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class UserInput : MonoBehaviour
@@ -10,7 +12,11 @@ public class UserInput : MonoBehaviour
 
     public string Name;
 
+    public Material DefaultMaterial;
+    public Material SelectedMaterial;
+
     private Vector3 lastMousePosition;
+    private bool isRightClickPressed = false;
     private bool isMiddleClickPressed = false;
 
     private GameObject Model;
@@ -19,6 +25,8 @@ public class UserInput : MonoBehaviour
     private float Zoom;
 
     private GameObject selectedPart;
+    private GameObject Tip;
+    private LineRenderer lineRenderer;
 
     // List of saved views (each saved view stores position, rotation, and field of view)
     private List<SavedView> SavedViews = new List<SavedView>();
@@ -32,20 +40,55 @@ public class UserInput : MonoBehaviour
         CameraComponent = Camera.GetComponent<Camera>(); // Get the Camera component
 
         LoadModel(Name);
-        selectedPart = Model.transform.GetChild(0).gameObject; 
+        selectedPart = null; 
+
+        Tip = GameObject.Find("Tip");
+        lineRenderer = GameObject.Find("Anchor").GetComponent<LineRenderer>();
+        Tip.SetActive(false);
     }
 
     public void Update()
     {
+        //turn on tooltip
+        if(selectedPart != null)
+        {
+            Tip.SetActive(true);
+            Tip.transform.GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>().text = selectedPart.name;
+
+            Vector3 selectedPartCenter = selectedPart.GetComponent<MeshRenderer>().bounds.center;
+
+            // Set the start and end points
+            lineRenderer.SetPosition(0, selectedPartCenter); // Set the start point (index 0)
+            lineRenderer.SetPosition(1, lineRenderer.gameObject.transform.position); // Set the start point (index 0)
+            
+        }
+        else
+        {
+            Tip.SetActive(false);
+        }
+
         // Check for middle mouse button press
-        if (Input.GetMouseButtonDown(1)) // 1 refers to the middle mouse button
+        if (Input.GetMouseButtonDown(1)) // 1 refers to the right mouse button
+        {
+            isRightClickPressed = true;
+            lastMousePosition = Input.mousePosition;
+            Cursor.visible = false;
+        }
+
+        if (Input.GetMouseButtonUp(1)) // right mouse button released
+        {
+            isRightClickPressed = false;
+            Cursor.visible = true;
+        }
+
+        if (Input.GetMouseButtonDown(2)) // 1 refers to the middle mouse button
         {
             isMiddleClickPressed = true;
             lastMousePosition = Input.mousePosition;
             Cursor.visible = false;
         }
 
-        if (Input.GetMouseButtonUp(1)) // Middle mouse button released
+        if (Input.GetMouseButtonUp(2)) // Middle mouse button released
         {
             isMiddleClickPressed = false;
             Cursor.visible = true;
@@ -67,12 +110,14 @@ public class UserInput : MonoBehaviour
         }
 
         // If middle mouse is held down, update rotation or movement
-        if (isMiddleClickPressed)
+        if (isRightClickPressed)
         {
             // Rotate the Model based on mouse movement
             RotateModel();
+        }
 
-            // Move the Model based on mouse movement
+        if(isMiddleClickPressed)
+        {
             MoveModel();
         }
     }
@@ -82,6 +127,17 @@ public class UserInput : MonoBehaviour
         Zoom--;
         Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Ensure Zoom is within the valid range
         CameraComponent.orthographicSize = Zoom;
+
+        // Gradually move the tip closer to x = 0 based on zoom level
+        Vector3 newTipPosition = Tip.transform.position;
+        newTipPosition.x = Mathf.Lerp(newTipPosition.x - Zoom, 1f, 0f); // Gradual transition towards x = 0
+
+        // Apply the new position to the Tip
+        Tip.transform.position = newTipPosition;
+
+        // Scale the Tip based on the zoom level
+        float scaleFactor = Mathf.Lerp(0.1f, 1.0f, 1f / Zoom); // Adjust the scale based on the zoom level
+        Tip.transform.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
     }
 
     public void ZoomOut()
@@ -89,6 +145,20 @@ public class UserInput : MonoBehaviour
         Zoom++;
         Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Ensure Zoom is within the valid range
         CameraComponent.orthographicSize = Zoom;
+
+        // Gradually move the tip farther from x = 0 as Zoom increases
+        Vector3 newTipPosition = Tip.transform.position;
+        newTipPosition.x = Mathf.Lerp(newTipPosition.x + Zoom, 1f, 0f); // Move farther from 0 as zoom increases
+
+        // Apply the new position to the Tip
+        Tip.transform.position = newTipPosition;
+
+        // Scale the Tip based on the zoom level
+        float scaleFactor = Mathf.Lerp(1f / Zoom, 1f / Zoom, 1f / Zoom); // Adjust the scale based on the zoom level
+        Tip.transform.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
+
+
+        // MAP DISTANCE AND SCALE BETWEEN 0-5 and 0-1
     }
 
     void RotateModel()
@@ -114,7 +184,7 @@ public class UserInput : MonoBehaviour
         Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
 
         // Convert the mouse movement into world space (movement in 3D)
-        Vector3 movement = new Vector3(mouseDelta.x, mouseDelta.y, 0) * movementSpeed * Time.deltaTime;
+        Vector3 movement = new Vector3(mouseDelta.x, mouseDelta.y, 0) * (movementSpeed * Zoom) * Time.deltaTime;
 
         // Move the Model (here the movement is applied in local space)
         Model.transform.Translate(movement, Space.World);
@@ -190,10 +260,8 @@ public class UserInput : MonoBehaviour
                 if (child.GetComponent<MeshCollider>() == null)
                 {
                     // Add a MeshCollider to the child
-                    MeshCollider meshCollider = child.gameObject.AddComponent<MeshCollider>();
+                    child.gameObject.AddComponent<MeshCollider>();
                     
-                    // // Optional: You can set the collider to be convex if needed (depending on physics)
-                    // meshCollider.convex = true;
                 }
             }
         }
@@ -213,9 +281,18 @@ public class UserInput : MonoBehaviour
         {
             // Step 4: If we hit something, output the name of the object
             GameObject hitObject = hit.collider.gameObject;
-            Debug.Log("Hit object: " + hitObject.name);
 
             selectedPart = hitObject;
+
+            for(int i = 0; i < Model.transform.GetChild(0).childCount; i++)
+            {
+                Model.transform.GetChild(0).GetChild(i).GetComponent<MeshRenderer>().material = DefaultMaterial;
+            }
+            selectedPart.GetComponent<MeshRenderer>().material = SelectedMaterial;
+        }
+        else
+        {
+            selectedPart = null;
         }
     }
 

@@ -71,14 +71,17 @@ public class UIScript : MonoBehaviour
     {
         // Find the slider for opacity
         opacitySlider = GameObject.Find("Opacity").GetComponent<Slider>(); // "OpacitySlider" is the name of the slider GameObject in the scene
-
-        // Get the current model's material
-        Renderer modelRenderer = UserInput.getCurrentPart().GetComponentInChildren<Renderer>();
         
-        // Get the material's color and change the alpha value based on the slider
-        Color currentColor = modelRenderer.material.color;
-        currentColor.a = opacitySlider.value;  // Set the alpha value based on the slider
-        modelRenderer.material.color = currentColor; // Apply the new color to the material
+        // Get the current model's material
+        if(UserInput.getCurrentPart())
+        {
+            Renderer modelRenderer = UserInput.getCurrentPart().GetComponentInChildren<Renderer>();
+
+            // Get the material's color and change the alpha value based on the slider
+            Color currentColor = modelRenderer.material.color;
+            currentColor.a = opacitySlider.value;  // Set the alpha value based on the slider
+            modelRenderer.material.color = currentColor; // Apply the new color to the material
+        }
     }
 
     public void SaveView()
