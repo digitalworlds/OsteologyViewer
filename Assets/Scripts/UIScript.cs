@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class UIScript : MonoBehaviour
 {
     private UserInput UserInput;
-    private Slider opacitySlider; // Slider for opacity adjustment
+    public Slider opacitySlider; // Slider for opacity adjustment
     private TextMeshProUGUI titleText; 
 
     private int numOfSavedViews;
@@ -16,6 +16,8 @@ public class UIScript : MonoBehaviour
 
     private Animator animator;
     private bool menu;
+
+    public Dictionary<GameObject, float> Opacities = new Dictionary<GameObject, float>(); 
     
     public void Start()
     {
@@ -81,6 +83,10 @@ public class UIScript : MonoBehaviour
             Color currentColor = modelRenderer.material.color;
             currentColor.a = opacitySlider.value;  // Set the alpha value based on the slider
             modelRenderer.material.color = currentColor; // Apply the new color to the material
+            if(Opacities.ContainsKey(UserInput.getCurrentPart()))
+            {
+                Opacities.Add(UserInput.getCurrentPart(), opacitySlider.value);
+            }
         }
     }
 

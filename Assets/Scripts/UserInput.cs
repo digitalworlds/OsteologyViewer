@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class UserInput : MonoBehaviour
@@ -31,6 +30,8 @@ public class UserInput : MonoBehaviour
     // List of saved views (each saved view stores position, rotation, and field of view)
     private List<SavedView> SavedViews = new List<SavedView>();
 
+    private UIScript uiScript;
+
     public void Start()
     {
         Zoom = defaultZoom;
@@ -45,6 +46,8 @@ public class UserInput : MonoBehaviour
         Tip = GameObject.Find("Tip");
         lineRenderer = GameObject.Find("Anchor").GetComponent<LineRenderer>();
         Tip.SetActive(false);
+
+        uiScript = GameObject.Find("OverlayUI").GetComponent<UIScript>();
     }
 
     public void Update()
@@ -60,7 +63,6 @@ public class UserInput : MonoBehaviour
             // Set the start and end points
             lineRenderer.SetPosition(0, selectedPartCenter); // Set the start point (index 0)
             lineRenderer.SetPosition(1, lineRenderer.gameObject.transform.position); // Set the start point (index 0)
-            
         }
         else
         {
@@ -261,7 +263,6 @@ public class UserInput : MonoBehaviour
                 {
                     // Add a MeshCollider to the child
                     child.gameObject.AddComponent<MeshCollider>();
-                    
                 }
             }
         }
@@ -282,21 +283,31 @@ public class UserInput : MonoBehaviour
             // Step 4: If we hit something, output the name of the object
             GameObject hitObject = hit.collider.gameObject;
 
-            selectedPart = hitObject;
-
-            for(int i = 0; i < Model.transform.GetChild(0).childCount; i++)
+            if(selectedPart != null && selectedPart == hitObject)
             {
-                Model.transform.GetChild(0).GetChild(i).GetComponent<MeshRenderer>().material = DefaultMaterial;
+                if(selectedPart.GetComponent<MeshRenderer>().material = SelectedMaterial)
+                {
+                    selectedPart.GetComponent<MeshRenderer>().material = DefaultMaterial;
+                }
+                selectedPart = null;
             }
-            selectedPart.GetComponent<MeshRenderer>().material = SelectedMaterial;
-        }
-        else
-        {
-            selectedPart = null;
+            else
+            {
+                selectedPart = hitObject;
+
+                for(int i = 0; i < Model.transform.GetChild(0).childCount; i++)
+                {
+                    Model.transform.GetChild(0).GetChild(i).GetComponent<MeshRenderer>().material = DefaultMaterial;
+                }
+                selectedPart.GetComponent<MeshRenderer>().material = SelectedMaterial;
+
+                if(uiScript.Opacities.ContainsKey(selectedPart))
+                {
+                    uiScript.opacitySlider.value = uiScript.Opacities[selectedPart];
+                }
+            }
         }
     }
-
-
 }
 
 // Class to store the position, rotation, and field of view
