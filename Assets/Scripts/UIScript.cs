@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using Unity.Mathematics;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -43,11 +42,11 @@ public class UIScript : MonoBehaviour
         }
 
         quaternion rot = new quaternion(300, 45, 285, 0);
-        UserInput.createView(Vector3.zero, rot, 4);
+        UserInput.CreateView(Vector3.zero, rot, 4);
         rot = new quaternion(20, 305, 335, 0);
-        UserInput.createView(Vector3.zero, rot, 4);
+        UserInput.CreateView(Vector3.zero, rot, 4);
         rot = new quaternion(40, 260, 250, 0);
-        UserInput.createView(Vector3.zero, rot, 4);
+        UserInput.CreateView(Vector3.zero, rot, 4);
 
         // Find the parent object "Views" and get its children
         viewsTransform = GameObject.Find("Views").transform;
@@ -58,8 +57,6 @@ public class UIScript : MonoBehaviour
             savedViews.Add(child.gameObject);
             child.gameObject.SetActive(false);
         }
-
-        
     }
 
     public void Update()
@@ -88,7 +85,7 @@ public class UIScript : MonoBehaviour
         // Find the slider for opacity
         opacitySlider = GameObject.Find("Opacity").GetComponent<Slider>(); // "OpacitySlider" is the name of the slider GameObject in the scene
         
-        GameObject currentPart = UserInput.getCurrentPart();
+        GameObject currentPart = UserInput.GetCurrentPart();
         
         if (currentPart != null)
         {

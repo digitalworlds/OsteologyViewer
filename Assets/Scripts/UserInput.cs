@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -16,8 +17,11 @@ public class UserInput : MonoBehaviour
 
     public string Name;
 
-    public Material DefaultMaterial;
+    // Dictionary to store materials for each part of the model
+    public Dictionary<string, Material> DefaultMaterials = new Dictionary<string, Material>();
     public Material SelectedMaterial;
+    public Material DefaultMaterialXray;
+    public Material SelectedMaterialXray;
 
     private Vector3 lastMousePosition;
     private bool isRightClickPressed = false;
@@ -46,10 +50,20 @@ public class UserInput : MonoBehaviour
         CameraComponent = Camera.GetComponent<Camera>(); // Get the Camera component
 
         LoadModel(Name);
-        selectedPart = null; 
+        selectedPart = null;
+
+        // Initialize the DefaultMaterials dictionary by iterating through model children
+        foreach (Transform child in Model.transform)
+        {
+            // Check if child has a MeshRenderer and add its material to the dictionary
+            MeshRenderer renderer = child.GetComponent<MeshRenderer>();
+            if (renderer != null)
+            {
+                DefaultMaterials[child.name] = renderer.material;
+            }
+        }
 
         Tip = GameObject.Find("Tip");
-        //lineRenderer = GameObject.Find("Anchor").GetComponent<LineRenderer>();
         Tip.SetActive(false);
 
         uiScript = GameObject.Find("OverlayUI").GetComponent<UIScript>();
@@ -57,38 +71,32 @@ public class UserInput : MonoBehaviour
 
     public void Update()
     {
-        //turn on tooltip
-        if(selectedPart != null)
+        // Turn on tooltip
+        if (selectedPart != null)
         {
             Tip.SetActive(true);
             Tip.transform.GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>().text = selectedPart.name;
-
-            // Vector3 selectedPartCenter = selectedPart.GetComponent<MeshRenderer>().bounds.center;
-
-            // // Set the start and end points
-            // lineRenderer.SetPosition(0, selectedPartCenter); // Set the start point (index 0)
-            // lineRenderer.SetPosition(1, lineRenderer.gameObject.transform.position); // Set the start point (index 0)
         }
         else
         {
             Tip.SetActive(false);
         }
 
-        // Check for middle mouse button press
-        if (Input.GetMouseButtonDown(1)) // 1 refers to the right mouse button
+        // Check for mouse button presses and handle movement/rotation
+        if (Input.GetMouseButtonDown(1)) // Right mouse button
         {
             isRightClickPressed = true;
             lastMousePosition = Input.mousePosition;
             Cursor.visible = false;
         }
 
-        if (Input.GetMouseButtonUp(1)) // right mouse button released
+        if (Input.GetMouseButtonUp(1)) // Right mouse button released
         {
             isRightClickPressed = false;
             Cursor.visible = true;
         }
 
-        if (Input.GetMouseButtonDown(2)) // 1 refers to the middle mouse button
+        if (Input.GetMouseButtonDown(2)) // Middle mouse button
         {
             isMiddleClickPressed = true;
             lastMousePosition = Input.mousePosition;
@@ -101,29 +109,30 @@ public class UserInput : MonoBehaviour
             Cursor.visible = true;
         }
 
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0)) // Left mouse button
         {
             SelectPart();
         }
 
+        // Zoom in/out
         float scrollInput = Input.GetAxis("Mouse ScrollWheel"); // Get scroll input
-        if (scrollInput > 0f && Zoom !> 0f)
+        if (scrollInput > 0f && Zoom > 0f)
         {
             ZoomIn();
         }
-        else if (scrollInput < 0f && Zoom !< 10f)
+        else if (scrollInput < 0f && Zoom < 10f)
         {
             ZoomOut();
         }
 
-        // If middle mouse is held down, update rotation or movement
+        // If right mouse is held down, rotate the model
         if (isRightClickPressed)
         {
-            // Rotate the Model based on mouse movement
             RotateModel();
         }
 
-        if(isMiddleClickPressed)
+        // If middle mouse is held down, move the model
+        if (isMiddleClickPressed)
         {
             MoveModel();
         }
@@ -134,15 +143,6 @@ public class UserInput : MonoBehaviour
         Zoom--;
         Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Clamp Zoom within range
         CameraComponent.orthographicSize = Zoom;
-
-        // // Move the tip relative to zoom level using tipMovementFactor
-        // Vector3 newTipPosition = Tip.transform.position;
-        // newTipPosition.x -= tipMovementFactor * Zoom;  // Adjust the movement distance based on zoom
-        // Tip.transform.position = newTipPosition;
-
-        // // Scale the Tip based on zoom level
-        // float scaleFactor = Mathf.Lerp(tipMinScale, tipMaxScale, 1f / Zoom); // Scale the tip based on zoom
-        // Tip.transform.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
     }
 
     public void ZoomOut()
@@ -150,15 +150,6 @@ public class UserInput : MonoBehaviour
         Zoom++;
         Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Clamp Zoom within range
         CameraComponent.orthographicSize = Zoom;
-
-        // // Move the tip relative to zoom level using tipMovementFactor
-        // Vector3 newTipPosition = Tip.transform.position;
-        // newTipPosition.x += tipMovementFactor * Zoom;  // Adjust the movement distance based on zoom
-        // Tip.transform.position = newTipPosition;
-
-        // // Scale the Tip based on zoom level
-        // float scaleFactor = Mathf.Lerp(tipMinScale, tipMaxScale, 1f / Zoom); // Scale the tip based on zoom
-        // Tip.transform.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
     }
 
     void RotateModel()
@@ -206,7 +197,7 @@ public class UserInput : MonoBehaviour
         Model.transform.rotation = Quaternion.identity;
     }
 
-    public GameObject getCurrentPart()
+    public GameObject GetCurrentPart()
     {
         return selectedPart;
     }
@@ -221,15 +212,19 @@ public class UserInput : MonoBehaviour
         SavedViews.Add(view);
     }
 
-    public void createView(Vector3 Pos, Quaternion Rot, float OrthographicSize)
+    // Method to create and save a custom view (position, rotation, and orthographic size)
+    public void CreateView(Vector3 position, Quaternion rotation, float orthographicSize)
     {
-        SavedView view = new SavedView(Pos, Rot, OrthographicSize);
+        // Create a new SavedView instance with the provided parameters
+        SavedView view = new SavedView(position, rotation, orthographicSize);
+        
+        // Add this custom view to the saved views list
         SavedViews.Add(view);
     }
 
     // Method to apply a saved view (position, rotation, and orthographic size)
     public void OpenSavedView(int index)
-    {        
+    {
         index--;
         if (index >= 0 && index < SavedViews.Count)
         {            
@@ -292,7 +287,8 @@ public class UserInput : MonoBehaviour
                 // Deselect the part if it's already selected
                 if (selectedPart.GetComponent<MeshRenderer>().material == SelectedMaterial)
                 {
-                    selectedPart.GetComponent<MeshRenderer>().material = DefaultMaterial;
+                    // Use DefaultMaterials dictionary to revert the material
+                    selectedPart.GetComponent<MeshRenderer>().material = DefaultMaterials[selectedPart.name];
                     selectedPart = null;
                 }
             }
@@ -301,51 +297,27 @@ public class UserInput : MonoBehaviour
                 // Deselect the previous part if there's one selected
                 if (selectedPart != null)
                 {
-                    selectedPart.GetComponent<MeshRenderer>().material = DefaultMaterial;
-                    if (uiScript.Opacities.ContainsKey(selectedPart))
-                    {
-                        float storedOpacity = uiScript.Opacities[selectedPart];
-                        // Apply the stored opacity to the model's material
-                        Renderer modelRenderer = selectedPart.GetComponentInChildren<Renderer>();
-                        Color currentColor = modelRenderer.material.color;
-                        currentColor.a = storedOpacity;  // Set the alpha value from stored opacity
-                        modelRenderer.material.color = currentColor;
-
-                        // Update the slider to reflect the stored opacity
-                        uiScript.opacitySlider.value = storedOpacity;
-                    }
-                    else
-                    {
-                        // If no opacity was set, you can default it to 1 (full opacity)
-                        uiScript.opacitySlider.value = 1f;
-                    }
+                    selectedPart.GetComponent<MeshRenderer>().material = DefaultMaterials[selectedPart.name];
                 }
 
                 selectedPart = hitObject;
 
                 // Set the selected part's material to the selected one
                 selectedPart.GetComponent<MeshRenderer>().material = SelectedMaterial;
-
-                // Restore opacity from the Opacities dictionary if available
-                if (uiScript.Opacities.ContainsKey(selectedPart))
-                {
-                    float storedOpacity = uiScript.Opacities[selectedPart];
-                    // Apply the stored opacity to the model's material
-                    Renderer modelRenderer = selectedPart.GetComponentInChildren<Renderer>();
-                    Color currentColor = modelRenderer.material.color;
-                    currentColor.a = storedOpacity;  // Set the alpha value from stored opacity
-                    modelRenderer.material.color = currentColor;
-
-                    // Update the slider to reflect the stored opacity
-                    uiScript.opacitySlider.value = storedOpacity;
-                }
-                else
-                {
-                    // If no opacity was set, you can default it to 1 (full opacity)
-                    uiScript.opacitySlider.value = 1f;
-                }
             }
         }
+    }
+
+    public void SetXray()
+    {
+        foreach(GameObject child in Model.transform)
+        {
+            child.GetComponent<MeshRenderer>().material = DefaultMaterialXray;
+        }
+    }
+    public void SetDefault()
+    {
+
     }
 }
 
@@ -365,5 +337,3 @@ public class SavedView
         OrthographicSize = orthographicSize;
     }
 }
-
-
