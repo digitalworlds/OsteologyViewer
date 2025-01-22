@@ -9,6 +9,11 @@ public class UserInput : MonoBehaviour
     public float movementSpeed = 0.2f; // Movement speed
     public float defaultZoom;
 
+    // Adjustable parameters for the tip's behavior
+    public float tipMovementFactor = 1f; // Factor for how far the tip moves relative to zoom
+    public float tipMinScale = 0.1f; // Minimum scale for the tip
+    public float tipMaxScale = 1f;  // Maximum scale for the tip
+
     public string Name;
 
     public Material DefaultMaterial;
@@ -27,7 +32,7 @@ public class UserInput : MonoBehaviour
     private GameObject Tip;
     private LineRenderer lineRenderer;
 
-    // List of saved views (each saved view stores position, rotation, and field of view)
+    // List of saved views (each saved view stores position, rotation, and orthographic size)
     private List<SavedView> SavedViews = new List<SavedView>();
 
     private UIScript uiScript;
@@ -44,7 +49,7 @@ public class UserInput : MonoBehaviour
         selectedPart = null; 
 
         Tip = GameObject.Find("Tip");
-        lineRenderer = GameObject.Find("Anchor").GetComponent<LineRenderer>();
+        //lineRenderer = GameObject.Find("Anchor").GetComponent<LineRenderer>();
         Tip.SetActive(false);
 
         uiScript = GameObject.Find("OverlayUI").GetComponent<UIScript>();
@@ -58,11 +63,11 @@ public class UserInput : MonoBehaviour
             Tip.SetActive(true);
             Tip.transform.GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>().text = selectedPart.name;
 
-            Vector3 selectedPartCenter = selectedPart.GetComponent<MeshRenderer>().bounds.center;
+            // Vector3 selectedPartCenter = selectedPart.GetComponent<MeshRenderer>().bounds.center;
 
-            // Set the start and end points
-            lineRenderer.SetPosition(0, selectedPartCenter); // Set the start point (index 0)
-            lineRenderer.SetPosition(1, lineRenderer.gameObject.transform.position); // Set the start point (index 0)
+            // // Set the start and end points
+            // lineRenderer.SetPosition(0, selectedPartCenter); // Set the start point (index 0)
+            // lineRenderer.SetPosition(1, lineRenderer.gameObject.transform.position); // Set the start point (index 0)
         }
         else
         {
@@ -127,40 +132,33 @@ public class UserInput : MonoBehaviour
     public void ZoomIn()
     {
         Zoom--;
-        Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Ensure Zoom is within the valid range
+        Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Clamp Zoom within range
         CameraComponent.orthographicSize = Zoom;
 
-        // Gradually move the tip closer to x = 0 based on zoom level
-        Vector3 newTipPosition = Tip.transform.position;
-        newTipPosition.x = Mathf.Lerp(newTipPosition.x - Zoom, 1f, 0f); // Gradual transition towards x = 0
+        // // Move the tip relative to zoom level using tipMovementFactor
+        // Vector3 newTipPosition = Tip.transform.position;
+        // newTipPosition.x -= tipMovementFactor * Zoom;  // Adjust the movement distance based on zoom
+        // Tip.transform.position = newTipPosition;
 
-        // Apply the new position to the Tip
-        Tip.transform.position = newTipPosition;
-
-        // Scale the Tip based on the zoom level
-        float scaleFactor = Mathf.Lerp(0.1f, 1.0f, 1f / Zoom); // Adjust the scale based on the zoom level
-        Tip.transform.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
+        // // Scale the Tip based on zoom level
+        // float scaleFactor = Mathf.Lerp(tipMinScale, tipMaxScale, 1f / Zoom); // Scale the tip based on zoom
+        // Tip.transform.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
     }
 
     public void ZoomOut()
     {
         Zoom++;
-        Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Ensure Zoom is within the valid range
+        Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Clamp Zoom within range
         CameraComponent.orthographicSize = Zoom;
 
-        // Gradually move the tip farther from x = 0 as Zoom increases
-        Vector3 newTipPosition = Tip.transform.position;
-        newTipPosition.x = Mathf.Lerp(newTipPosition.x + Zoom, 1f, 0f); // Move farther from 0 as zoom increases
+        // // Move the tip relative to zoom level using tipMovementFactor
+        // Vector3 newTipPosition = Tip.transform.position;
+        // newTipPosition.x += tipMovementFactor * Zoom;  // Adjust the movement distance based on zoom
+        // Tip.transform.position = newTipPosition;
 
-        // Apply the new position to the Tip
-        Tip.transform.position = newTipPosition;
-
-        // Scale the Tip based on the zoom level
-        float scaleFactor = Mathf.Lerp(1f / Zoom, 1f / Zoom, 1f / Zoom); // Adjust the scale based on the zoom level
-        Tip.transform.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
-
-
-        // MAP DISTANCE AND SCALE BETWEEN 0-5 and 0-1
+        // // Scale the Tip based on zoom level
+        // float scaleFactor = Mathf.Lerp(tipMinScale, tipMaxScale, 1f / Zoom); // Scale the tip based on zoom
+        // Tip.transform.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
     }
 
     void RotateModel()
@@ -197,9 +195,9 @@ public class UserInput : MonoBehaviour
 
     public void ResetView()
     {
-        // Reset the camera's field of view to the default zoom
+        // Reset the camera's orthographic size to the default zoom
         Zoom = defaultZoom;
-        CameraComponent.fieldOfView = Zoom;
+        CameraComponent.orthographicSize = Zoom;
 
         // Reset the model's position to the origin (0, 0, 0)
         Model.transform.position = Vector3.zero;
@@ -213,17 +211,23 @@ public class UserInput : MonoBehaviour
         return selectedPart;
     }
 
-    // Method to save the current view (position, rotation, and field of view)
+    // Method to save the current view (position, rotation, and orthographic size)
     public void SaveView()
     {
-        // Save the current position, rotation, and camera's field of view
-        SavedView view = new SavedView(Model.transform.position, Model.transform.rotation, CameraComponent.fieldOfView);
+        // Save the current position, rotation, and camera's orthographic size
+        SavedView view = new SavedView(Model.transform.position, Model.transform.rotation, CameraComponent.orthographicSize);
 
         // Add the view to the list of saved views
         SavedViews.Add(view);
     }
 
-    // Method to apply a saved view (position, rotation, and field of view)
+    public void createView(Vector3 Pos, Quaternion Rot, float OrthographicSize)
+    {
+        SavedView view = new SavedView(Pos, Rot, OrthographicSize);
+        SavedViews.Add(view);
+    }
+
+    // Method to apply a saved view (position, rotation, and orthographic size)
     public void OpenSavedView(int index)
     {        
         index--;
@@ -231,10 +235,10 @@ public class UserInput : MonoBehaviour
         {            
             SavedView savedView = SavedViews[index];
 
-            // Apply the saved position, rotation, and field of view
+            // Apply the saved position, rotation, and orthographic size
             Model.transform.position = savedView.Position;
             Model.transform.rotation = savedView.Rotation;
-            CameraComponent.fieldOfView = savedView.FieldOfView;
+            CameraComponent.orthographicSize = savedView.OrthographicSize;
         }
     }
 
@@ -283,47 +287,82 @@ public class UserInput : MonoBehaviour
             // Step 4: If we hit something, output the name of the object
             GameObject hitObject = hit.collider.gameObject;
 
-            if(selectedPart != null && selectedPart == hitObject)
+            if (selectedPart != null && selectedPart == hitObject)
             {
-                if(selectedPart.GetComponent<MeshRenderer>().material = SelectedMaterial)
+                // Deselect the part if it's already selected
+                if (selectedPart.GetComponent<MeshRenderer>().material == SelectedMaterial)
                 {
                     selectedPart.GetComponent<MeshRenderer>().material = DefaultMaterial;
+                    selectedPart = null;
                 }
-                selectedPart = null;
             }
             else
             {
+                // Deselect the previous part if there's one selected
+                if (selectedPart != null)
+                {
+                    selectedPart.GetComponent<MeshRenderer>().material = DefaultMaterial;
+                    if (uiScript.Opacities.ContainsKey(selectedPart))
+                    {
+                        float storedOpacity = uiScript.Opacities[selectedPart];
+                        // Apply the stored opacity to the model's material
+                        Renderer modelRenderer = selectedPart.GetComponentInChildren<Renderer>();
+                        Color currentColor = modelRenderer.material.color;
+                        currentColor.a = storedOpacity;  // Set the alpha value from stored opacity
+                        modelRenderer.material.color = currentColor;
+
+                        // Update the slider to reflect the stored opacity
+                        uiScript.opacitySlider.value = storedOpacity;
+                    }
+                    else
+                    {
+                        // If no opacity was set, you can default it to 1 (full opacity)
+                        uiScript.opacitySlider.value = 1f;
+                    }
+                }
+
                 selectedPart = hitObject;
 
-                for(int i = 0; i < Model.transform.GetChild(0).childCount; i++)
-                {
-                    Model.transform.GetChild(0).GetChild(i).GetComponent<MeshRenderer>().material = DefaultMaterial;
-                }
+                // Set the selected part's material to the selected one
                 selectedPart.GetComponent<MeshRenderer>().material = SelectedMaterial;
 
-                if(uiScript.Opacities.ContainsKey(selectedPart))
+                // Restore opacity from the Opacities dictionary if available
+                if (uiScript.Opacities.ContainsKey(selectedPart))
                 {
-                    uiScript.opacitySlider.value = uiScript.Opacities[selectedPart];
+                    float storedOpacity = uiScript.Opacities[selectedPart];
+                    // Apply the stored opacity to the model's material
+                    Renderer modelRenderer = selectedPart.GetComponentInChildren<Renderer>();
+                    Color currentColor = modelRenderer.material.color;
+                    currentColor.a = storedOpacity;  // Set the alpha value from stored opacity
+                    modelRenderer.material.color = currentColor;
+
+                    // Update the slider to reflect the stored opacity
+                    uiScript.opacitySlider.value = storedOpacity;
+                }
+                else
+                {
+                    // If no opacity was set, you can default it to 1 (full opacity)
+                    uiScript.opacitySlider.value = 1f;
                 }
             }
         }
     }
 }
 
-// Class to store the position, rotation, and field of view
+// Class to store the position, rotation, and orthographic size
 [System.Serializable]
 public class SavedView
 {
     public Vector3 Position;
     public Quaternion Rotation;
-    public float FieldOfView;
+    public float OrthographicSize;
 
-    // Constructor to initialize position, rotation, and field of view
-    public SavedView(Vector3 position, Quaternion rotation, float fieldOfView)
+    // Constructor to initialize position, rotation, and orthographic size
+    public SavedView(Vector3 position, Quaternion rotation, float orthographicSize)
     {
         Position = position;
         Rotation = rotation;
-        FieldOfView = fieldOfView;
+        OrthographicSize = orthographicSize;
     }
 }
 

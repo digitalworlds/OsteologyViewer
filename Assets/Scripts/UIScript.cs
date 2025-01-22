@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.Mathematics;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,8 +13,10 @@ public class UIScript : MonoBehaviour
     private TextMeshProUGUI titleText; 
 
     private int numOfSavedViews;
-    private List<GameObject> savedViews; // This should be initialized
+    private List<GameObject> savedViews = new List<GameObject>(); // This should be initialized
+    private List<GameObject> defaultViews = new List<GameObject>();
     private Transform viewsTransform; // This is a local variable, not needed as a class field
+    private Transform defaultViewsTransform;
 
     private Animator animator;
     private bool menu;
@@ -25,12 +29,25 @@ public class UIScript : MonoBehaviour
         animator = GameObject.Find("SideMenu").GetComponent<Animator>();
         titleText = GameObject.Find("Title").GetComponent<TextMeshProUGUI>();
 
-        // Initialize the list to avoid NullReferenceException
-        savedViews = new List<GameObject>();
-
         numOfSavedViews = -1;
         
         menu = false;
+
+        // Find the parent object "Views" and get its children
+        defaultViewsTransform = GameObject.Find("DefaultViews").transform;
+
+        // Populate the savedViews list with all child GameObjects of the "Views" object
+        foreach (Transform child in defaultViewsTransform)
+        {
+            defaultViews.Add(child.gameObject);
+        }
+
+        quaternion rot = new quaternion(300, 45, 285, 0);
+        UserInput.createView(Vector3.zero, rot, 4);
+        rot = new quaternion(20, 305, 335, 0);
+        UserInput.createView(Vector3.zero, rot, 4);
+        rot = new quaternion(40, 260, 250, 0);
+        UserInput.createView(Vector3.zero, rot, 4);
 
         // Find the parent object "Views" and get its children
         viewsTransform = GameObject.Find("Views").transform;
@@ -39,13 +56,10 @@ public class UIScript : MonoBehaviour
         foreach (Transform child in viewsTransform)
         {
             savedViews.Add(child.gameObject);
+            child.gameObject.SetActive(false);
         }
 
-        // Optionally hide all saved views at the start
-        foreach (GameObject view in savedViews)
-        {
-            view.SetActive(false);
-        }
+        
     }
 
     public void Update()
@@ -74,18 +88,27 @@ public class UIScript : MonoBehaviour
         // Find the slider for opacity
         opacitySlider = GameObject.Find("Opacity").GetComponent<Slider>(); // "OpacitySlider" is the name of the slider GameObject in the scene
         
-        // Get the current model's material
-        if(UserInput.getCurrentPart())
+        GameObject currentPart = UserInput.getCurrentPart();
+        
+        if (currentPart != null)
         {
-            Renderer modelRenderer = UserInput.getCurrentPart().GetComponentInChildren<Renderer>();
+            Renderer modelRenderer = currentPart.GetComponentInChildren<Renderer>();
 
             // Get the material's color and change the alpha value based on the slider
             Color currentColor = modelRenderer.material.color;
             currentColor.a = opacitySlider.value;  // Set the alpha value based on the slider
             modelRenderer.material.color = currentColor; // Apply the new color to the material
-            if(Opacities.ContainsKey(UserInput.getCurrentPart()))
+            
+            // Update the opacity in the dictionary
+            if (Opacities.ContainsKey(currentPart))
             {
-                Opacities.Add(UserInput.getCurrentPart(), opacitySlider.value);
+                // Update existing opacity value for this part
+                Opacities[currentPart] = opacitySlider.value;
+            }
+            else
+            {
+                // Add a new opacity entry if not already present
+                Opacities.Add(currentPart, opacitySlider.value);
             }
         }
     }
