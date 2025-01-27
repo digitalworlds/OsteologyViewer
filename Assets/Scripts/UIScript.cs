@@ -20,10 +20,15 @@ public class UIScript : MonoBehaviour
     private Animator animator;
     private bool menu;
 
+    public bool xrayOn;
+
     public Dictionary<GameObject, float> Opacities = new Dictionary<GameObject, float>(); 
+    public Dictionary<GameObject, bool> OffOn = new Dictionary<GameObject, bool>(); 
     
     public void Start()
     {
+        opacitySlider = GameObject.Find("Opacity").GetComponent<Slider>();
+        
         UserInput = GameObject.Find("Manager").GetComponent<UserInput>();
         animator = GameObject.Find("SideMenu").GetComponent<Animator>();
         titleText = GameObject.Find("Title").GetComponent<TextMeshProUGUI>();
@@ -82,33 +87,56 @@ public class UIScript : MonoBehaviour
 
     public void ChangeOpacity()
     {
-        // Find the slider for opacity
-        opacitySlider = GameObject.Find("Opacity").GetComponent<Slider>(); // "OpacitySlider" is the name of the slider GameObject in the scene
-        
         GameObject currentPart = UserInput.GetCurrentPart();
-        
         if (currentPart != null)
         {
             Renderer modelRenderer = currentPart.GetComponentInChildren<Renderer>();
 
-            // Get the material's color and change the alpha value based on the slider
-            Color currentColor = modelRenderer.material.color;
-            currentColor.a = opacitySlider.value;  // Set the alpha value based on the slider
-            modelRenderer.material.color = currentColor; // Apply the new color to the material
-            
-            // Update the opacity in the dictionary
-            if (Opacities.ContainsKey(currentPart))
+            if (xrayOn)
             {
-                // Update existing opacity value for this part
-                Opacities[currentPart] = opacitySlider.value;
+                // Get the material's color and change the alpha value based on the slider
+                Color currentColor = modelRenderer.material.color;
+                currentColor.a = opacitySlider.value;  // Set the alpha value based on the slider
+                modelRenderer.material.color = currentColor; // Apply the new color to the material
+
+                // Update the opacity in the dictionary
+                if (Opacities.ContainsKey(currentPart))
+                {
+                    // Update existing opacity value for this part
+                    Opacities[currentPart] = opacitySlider.value;
+                }
+                else
+                {
+                    // Add a new opacity entry if not already present
+                    Opacities.Add(currentPart, opacitySlider.value);
+                }
             }
             else
             {
-                // Add a new opacity entry if not already present
-                Opacities.Add(currentPart, opacitySlider.value);
+                if (opacitySlider.value < 0.5f)
+                {
+                    modelRenderer.enabled = false;
+                }
+                else
+                {
+                    modelRenderer.enabled = true;
+                }
+
+                // Update the state in the dictionary
+                if (OffOn.ContainsKey(currentPart))
+                {
+                    // Update existing opacity value for this part
+                    OffOn[currentPart] = modelRenderer.enabled;
+                }
+                else
+                {
+                    // Add a new opacity entry if not already present
+                    OffOn.Add(currentPart, modelRenderer.enabled);
+                }
             }
         }
     }
+
 
     public void SaveView()
     {

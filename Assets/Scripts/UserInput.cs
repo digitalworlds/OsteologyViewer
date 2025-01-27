@@ -40,6 +40,7 @@ public class UserInput : MonoBehaviour
     private List<SavedView> SavedViews = new List<SavedView>();
 
     private UIScript uiScript;
+    private TextMeshProUGUI scaleValue;
 
     public void Start()
     {
@@ -49,14 +50,16 @@ public class UserInput : MonoBehaviour
         Camera = GameObject.Find("Main Camera");
         CameraComponent = Camera.GetComponent<Camera>(); // Get the Camera component
 
+        scaleValue = GameObject.Find("ScaleValue").GetComponent<TextMeshProUGUI>();
+
         LoadModel(Name);
         selectedPart = null;
 
         // Initialize the DefaultMaterials dictionary by iterating through model children
         foreach (Transform child in Model.transform)
         {
-            // Check if child has a MeshRenderer and add its material to the dictionary
-            MeshRenderer renderer = child.GetComponent<MeshRenderer>();
+            // Check if child has a Renderer and add its material to the dictionary
+            Renderer renderer = child.GetComponent<Renderer>();
             if (renderer != null)
             {
                 DefaultMaterials[child.name] = renderer.material;
@@ -143,6 +146,7 @@ public class UserInput : MonoBehaviour
         Zoom--;
         Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Clamp Zoom within range
         CameraComponent.orthographicSize = Zoom;
+        scaleValue.text = Zoom.ToString() + "cm";
     }
 
     public void ZoomOut()
@@ -150,6 +154,7 @@ public class UserInput : MonoBehaviour
         Zoom++;
         Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Clamp Zoom within range
         CameraComponent.orthographicSize = Zoom;
+        scaleValue.text = Zoom.ToString() + "cm";
     }
 
     void RotateModel()
@@ -262,6 +267,7 @@ public class UserInput : MonoBehaviour
                 {
                     // Add a MeshCollider to the child
                     child.gameObject.AddComponent<MeshCollider>();
+                    DefaultMaterials.Add(child.name, child.gameObject.GetComponent<Renderer>().material);
                 }
             }
         }
@@ -284,12 +290,34 @@ public class UserInput : MonoBehaviour
 
             if (selectedPart != null && selectedPart == hitObject)
             {
-                // Deselect the part if it's already selected
-                if (selectedPart.GetComponent<MeshRenderer>().material == SelectedMaterial)
+                if (uiScript.xrayOn)
                 {
-                    // Use DefaultMaterials dictionary to revert the material
-                    selectedPart.GetComponent<MeshRenderer>().material = DefaultMaterials[selectedPart.name];
-                    selectedPart = null;
+                    // Deselect the part if it's already selected
+                    if (selectedPart.GetComponent<Renderer>().material == SelectedMaterialXray)
+                    {
+                        // Use DefaultMaterials dictionary to revert the material
+                        Color withOpacity = DefaultMaterialXray.color;
+                        withOpacity.a = SelectedMaterialXray.color.a;
+
+                        selectedPart.GetComponent<Renderer>().material = DefaultMaterialXray;
+                        selectedPart.GetComponent<Renderer>().material.color = withOpacity;
+
+                        selectedPart = null;
+                        // Reset the slider when nothing is selected
+                        uiScript.opacitySlider.value = 1f;
+                    }
+                }
+                else
+                {
+                    // Deselect the part if it's already selected
+                    if (selectedPart.GetComponent<Renderer>().material == SelectedMaterial)
+                    {
+                        // Use DefaultMaterials dictionary to revert the material
+                        selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
+                        selectedPart = null;
+                        // Reset the slider when nothing is selected
+                        uiScript.opacitySlider.value = 1f;
+                    }
                 }
             }
             else
@@ -297,27 +325,61 @@ public class UserInput : MonoBehaviour
                 // Deselect the previous part if there's one selected
                 if (selectedPart != null)
                 {
-                    selectedPart.GetComponent<MeshRenderer>().material = DefaultMaterials[selectedPart.name];
+                    if (uiScript.xrayOn)
+                    {
+                        selectedPart.GetComponent<Renderer>().material = DefaultMaterialXray;
+                    }
+                    else
+                    {
+                        selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
+                    }
                 }
 
                 selectedPart = hitObject;
 
                 // Set the selected part's material to the selected one
-                selectedPart.GetComponent<MeshRenderer>().material = SelectedMaterial;
+                if (uiScript.xrayOn)
+                {
+                    selectedPart.GetComponent<Renderer>().material = SelectedMaterialXray;
+                }
+                else
+                {
+                    selectedPart.GetComponent<Renderer>().material = SelectedMaterial;
+                }
+
+                // Update the slider value based on the opacity dictionary (if exists)
+                if (uiScript.Opacities.ContainsKey(selectedPart))
+                {
+                    uiScript.opacitySlider.value = uiScript.Opacities[selectedPart];
+                }
+                else
+                {
+                    // If no opacity is stored yet, default it to 1 (fully opaque)
+                    uiScript.opacitySlider.value = 1f;
+                }
             }
         }
     }
 
+
     public void SetXray()
     {
-        foreach(GameObject child in Model.transform)
+        foreach(Transform child in Model.transform.GetChild(0))
         {
-            child.GetComponent<MeshRenderer>().material = DefaultMaterialXray;
+            child.GetComponent<Renderer>().enabled = true;
+            child.GetComponent<Renderer>().material = DefaultMaterialXray;
         }
+        selectedPart = null;
+        uiScript.xrayOn = true;
     }
     public void SetDefault()
     {
-
+        foreach(Transform child in Model.transform.GetChild(0))
+        {
+            child.GetComponent<Renderer>().material = DefaultMaterials[child.name];
+        }
+        selectedPart = null;
+        uiScript.xrayOn = false;
     }
 }
 
