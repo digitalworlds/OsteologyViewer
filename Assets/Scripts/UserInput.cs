@@ -146,7 +146,7 @@ public class UserInput : MonoBehaviour
         Zoom--;
         Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Clamp Zoom within range
         CameraComponent.orthographicSize = Zoom;
-        scaleValue.text = Zoom.ToString() + "cm";
+        scaleValue.text = Zoom.ToString() + "mm";
     }
 
     public void ZoomOut()
@@ -154,7 +154,7 @@ public class UserInput : MonoBehaviour
         Zoom++;
         Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Clamp Zoom within range
         CameraComponent.orthographicSize = Zoom;
-        scaleValue.text = Zoom.ToString() + "cm";
+        scaleValue.text = Zoom.ToString() + "mm";
     }
 
     void RotateModel()
@@ -304,7 +304,7 @@ public class UserInput : MonoBehaviour
 
                         selectedPart = null;
                         // Reset the slider when nothing is selected
-                        uiScript.opacitySlider.value = 1f;
+                        uiScript.opacitySlider.value = 1f; // Reset slider to default value (fully opaque)
                     }
                 }
                 else
@@ -316,7 +316,7 @@ public class UserInput : MonoBehaviour
                         selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
                         selectedPart = null;
                         // Reset the slider when nothing is selected
-                        uiScript.opacitySlider.value = 1f;
+                        uiScript.opacitySlider.value = 1f; // Reset slider to default value (fully opaque)
                     }
                 }
             }
@@ -350,6 +350,7 @@ public class UserInput : MonoBehaviour
                 // Update the slider value based on the opacity dictionary (if exists)
                 if (uiScript.Opacities.ContainsKey(selectedPart))
                 {
+                    // Apply the stored opacity for the selected part
                     uiScript.opacitySlider.value = uiScript.Opacities[selectedPart];
                 }
                 else
@@ -371,6 +372,7 @@ public class UserInput : MonoBehaviour
         }
         selectedPart = null;
         uiScript.xrayOn = true;
+        uiScript.opacitySlider.wholeNumbers = false;
     }
     public void SetDefault()
     {
@@ -380,6 +382,7 @@ public class UserInput : MonoBehaviour
         }
         selectedPart = null;
         uiScript.xrayOn = false;
+        uiScript.opacitySlider.wholeNumbers = true;
     }
 }
 

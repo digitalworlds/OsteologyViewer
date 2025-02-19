@@ -94,49 +94,25 @@ public class UIScript : MonoBehaviour
 
             if (xrayOn)
             {
-                // Get the material's color and change the alpha value based on the slider
+                // Always change the opacity based on the slider value while in xray mode
                 Color currentColor = modelRenderer.material.color;
-                currentColor.a = opacitySlider.value;  // Set the alpha value based on the slider
+                currentColor.a = opacitySlider.value;  // Update alpha based on the slider value
                 modelRenderer.material.color = currentColor; // Apply the new color to the material
 
-                // Update the opacity in the dictionary
-                if (Opacities.ContainsKey(currentPart))
-                {
-                    // Update existing opacity value for this part
-                    Opacities[currentPart] = opacitySlider.value;
-                }
-                else
-                {
-                    // Add a new opacity entry if not already present
-                    Opacities.Add(currentPart, opacitySlider.value);
-                }
+                // Update the opacity in the dictionary for this part
+                Opacities[currentPart] = opacitySlider.value;
             }
             else
             {
-                if (opacitySlider.value < 0.5f)
-                {
-                    modelRenderer.enabled = false;
-                }
-                else
-                {
-                    modelRenderer.enabled = true;
-                }
+                // For non-xray mode, adjust the part's visibility based on the slider value
+                bool isVisible = opacitySlider.value >= 0.5f;
+                modelRenderer.enabled = isVisible;
 
-                // Update the state in the dictionary
-                if (OffOn.ContainsKey(currentPart))
-                {
-                    // Update existing opacity value for this part
-                    OffOn[currentPart] = modelRenderer.enabled;
-                }
-                else
-                {
-                    // Add a new opacity entry if not already present
-                    OffOn.Add(currentPart, modelRenderer.enabled);
-                }
+                // Update visibility state in the dictionary
+                OffOn[currentPart] = isVisible;
             }
         }
     }
-
 
     public void SaveView()
     {
