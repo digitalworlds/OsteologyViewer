@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using GLTFast;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class UserInput : MonoBehaviour
 {   
@@ -17,7 +19,7 @@ public class UserInput : MonoBehaviour
 
     public string Name;
 
-    // Dictionary to store materials for each part of the model
+    // Dictionary to store materials for each part of the VisualModel
     public Dictionary<string, Material> DefaultMaterials = new Dictionary<string, Material>();
     public Material SelectedMaterial;
     public Material DefaultMaterialXray;
@@ -27,7 +29,7 @@ public class UserInput : MonoBehaviour
     private bool isRightClickPressed = false;
     private bool isMiddleClickPressed = false;
 
-    private GameObject Model;
+    private GameObject VisualModel;
     private GameObject Camera;
     private Camera CameraComponent;
     private float Zoom;
@@ -46,17 +48,17 @@ public class UserInput : MonoBehaviour
     {
         Zoom = defaultZoom;
 
-        Model = GameObject.Find("Model");
+        VisualModel = GameObject.Find("Model");
         Camera = GameObject.Find("Main Camera");
         CameraComponent = Camera.GetComponent<Camera>(); // Get the Camera component
 
         scaleValue = GameObject.Find("ScaleValue").GetComponent<TextMeshProUGUI>();
 
-        LoadModel(Name);
+        //LoadModel(Name);
         selectedPart = null;
 
-        // Initialize the DefaultMaterials dictionary by iterating through model children
-        foreach (Transform child in Model.transform)
+        // Initialize the DefaultMaterials dictionary by iterating through VisualModel children
+        foreach (Transform child in VisualModel.transform)
         {
             // Check if child has a Renderer and add its material to the dictionary
             Renderer renderer = child.GetComponent<Renderer>();
@@ -128,13 +130,13 @@ public class UserInput : MonoBehaviour
             ZoomOut();
         }
 
-        // If right mouse is held down, rotate the model
+        // If right mouse is held down, rotate the VisualModel
         if (isRightClickPressed)
         {
             RotateModel();
         }
 
-        // If middle mouse is held down, move the model
+        // If middle mouse is held down, move the VisualModel
         if (isMiddleClickPressed)
         {
             MoveModel();
@@ -166,9 +168,9 @@ public class UserInput : MonoBehaviour
         float rotX = mouseDelta.x * rotationSpeed * Time.deltaTime;
         float rotY = mouseDelta.y * rotationSpeed * Time.deltaTime;
 
-        // Rotate the Model around the X and Y axes
-        Model.transform.Rotate(Vector3.up, -rotX, Space.World); // Rotate around Y axis (horizontal mouse movement)
-        Model.transform.Rotate(Vector3.right, rotY, Space.World); // Rotate around X axis (vertical mouse movement)
+        // Rotate the VisualModel around the X and Y axes
+        VisualModel.transform.Rotate(Vector3.up, -rotX, Space.World); // Rotate around Y axis (horizontal mouse movement)
+        VisualModel.transform.Rotate(Vector3.right, rotY, Space.World); // Rotate around X axis (vertical mouse movement)
 
         // Update last mouse position for the next frame
         lastMousePosition = Input.mousePosition;
@@ -182,8 +184,8 @@ public class UserInput : MonoBehaviour
         // Convert the mouse movement into world space (movement in 3D)
         Vector3 movement = new Vector3(mouseDelta.x, mouseDelta.y, 0) * (movementSpeed * Zoom) * Time.deltaTime;
 
-        // Move the Model (here the movement is applied in local space)
-        Model.transform.Translate(movement, Space.World);
+        // Move the VisualModel (here the movement is applied in local space)
+        VisualModel.transform.Translate(movement, Space.World);
 
         // Update last mouse position for next frame
         lastMousePosition = Input.mousePosition;
@@ -195,11 +197,11 @@ public class UserInput : MonoBehaviour
         Zoom = defaultZoom;
         CameraComponent.orthographicSize = Zoom;
 
-        // Reset the model's position to the origin (0, 0, 0)
-        Model.transform.position = Vector3.zero;
+        // Reset the VisualModel's position to the origin (0, 0, 0)
+        VisualModel.transform.position = Vector3.zero;
 
-        // Reset the model's rotation to the default rotation (no rotation)
-        Model.transform.rotation = Quaternion.identity;
+        // Reset the VisualModel's rotation to the default rotation (no rotation)
+        VisualModel.transform.rotation = Quaternion.identity;
     }
 
     public GameObject GetCurrentPart()
@@ -211,7 +213,7 @@ public class UserInput : MonoBehaviour
     public void SaveView()
     {
         // Save the current position, rotation, and camera's orthographic size
-        SavedView view = new SavedView(Model.transform.position, Model.transform.rotation, CameraComponent.orthographicSize);
+        SavedView view = new SavedView(VisualModel.transform.position, VisualModel.transform.rotation, CameraComponent.orthographicSize);
 
         // Add the view to the list of saved views
         SavedViews.Add(view);
@@ -236,27 +238,47 @@ public class UserInput : MonoBehaviour
             SavedView savedView = SavedViews[index];
 
             // Apply the saved position, rotation, and orthographic size
-            Model.transform.position = savedView.Position;
-            Model.transform.rotation = savedView.Rotation;
+            VisualModel.transform.position = savedView.Position;
+            VisualModel.transform.rotation = savedView.Rotation;
             CameraComponent.orthographicSize = savedView.OrthographicSize;
         }
     }
 
-    public void LoadModel(string Name)
+    public IEnumerator LoadModel(string ModelURL, string JsonURL)
     {
-        // Load the model prefab from the Resources folder
-        GameObject modelPrefab = Resources.Load<GameObject>("Prefabs/" + Name + "/" + Name);
+        // First, load the JSON metadata
+        UnityWebRequest jsonRequest = UnityWebRequest.Get(JsonURL);
+        yield return jsonRequest.SendWebRequest();
+        
+        // // Load the VisualModel prefab from the Resources folder
+        // GameObject VisualModelPrefab = Resources.Load<GameObject>("Models/" + Name + "Model");
 
-        // Instantiate the model at the origin with the prefab's rotation
-        GameObject instantiatedModel = Instantiate(modelPrefab, new Vector3(0, 0, 0), modelPrefab.transform.rotation);
+        // // Instantiate the VisualModel at the origin with the prefab's rotation
+        // GameObject instantiatedVisualModel = Instantiate(VisualModelPrefab, new Vector3(0, 0, 0), VisualModelPrefab.transform.rotation);
 
-        // Set the parent of the instantiated model to 'Model'
-        instantiatedModel.transform.SetParent(Model.transform);
+        // // Set the parent of the instantiated VisualModel to 'VisualModel'
+        // instantiatedVisualModel.transform.SetParent(VisualModel.transform);
 
-        // Optionally, reset the local position if you want to keep it relative to the parent
-        instantiatedModel.transform.localPosition = Vector3.zero;
+        // // Optionally, reset the local position if you want to keep it relative to the parent
+        // instantiatedVisualModel.transform.localPosition = Vector3.zero;
 
-        foreach (Transform child in instantiatedModel.transform)
+        
+        if (jsonRequest.result == UnityWebRequest.Result.Success)
+        {
+            string json = jsonRequest.downloadHandler.text;
+            Model ModelData = JsonUtility.FromJson<Model>(json);
+            Debug.Log("Model Name: " + ModelData.ModelName);
+            Debug.Log("Description: " + ModelData.Description);
+            
+            foreach(ModelPart part in ModelData.Parts)
+            {
+                Debug.Log("Part Name: " + part.PartName);
+                Debug.Log("Part Description: " + part.PartDescription);
+            }
+        }
+
+        VisualModel.GetComponent<GltfAsset>().Url = ModelURL;   
+        foreach (Transform child in VisualModel.transform)
         {
             // Add a MeshCollider to the child if it has a MeshFilter (which indicates it has a mesh)
             MeshFilter meshFilter = child.GetComponent<MeshFilter>();
@@ -362,10 +384,9 @@ public class UserInput : MonoBehaviour
         }
     }
 
-
     public void SetXray()
     {
-        foreach(Transform child in Model.transform.GetChild(0))
+        foreach(Transform child in VisualModel.transform.GetChild(0))
         {
             child.GetComponent<Renderer>().enabled = true;
             child.GetComponent<Renderer>().material = DefaultMaterialXray;
@@ -376,7 +397,7 @@ public class UserInput : MonoBehaviour
     }
     public void SetDefault()
     {
-        foreach(Transform child in Model.transform.GetChild(0))
+        foreach(Transform child in VisualModel.transform.GetChild(0))
         {
             child.GetComponent<Renderer>().material = DefaultMaterials[child.name];
         }
@@ -387,7 +408,7 @@ public class UserInput : MonoBehaviour
 }
 
 // Class to store the position, rotation, and orthographic size
-[System.Serializable]
+[Serializable]
 public class SavedView
 {
     public Vector3 Position;
@@ -401,4 +422,20 @@ public class SavedView
         Rotation = rotation;
         OrthographicSize = orthographicSize;
     }
+}
+
+[Serializable]
+public class Model
+{
+    public string ModelName;
+    public string Description;
+    public ModelPart[] Parts;
+
+}
+
+[Serializable]
+public class ModelPart
+{
+    public string PartName;
+    public string PartDescription;
 }
