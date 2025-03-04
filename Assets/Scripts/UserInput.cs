@@ -72,6 +72,8 @@ public class UserInput : MonoBehaviour
         Tip.SetActive(false);
 
         uiScript = GameObject.Find("OverlayUI").GetComponent<UIScript>();
+
+        StartCoroutine(LoadModel("https://digitalworlds.github.io/CURE25_Test/models/CP17/CP17.json"));
     }
 
     public void Update()
@@ -244,24 +246,11 @@ public class UserInput : MonoBehaviour
         }
     }
 
-    public IEnumerator LoadModel(string ModelURL, string JsonURL)
+    public IEnumerator LoadModel(string JsonURL)
     {
         // First, load the JSON metadata
         UnityWebRequest jsonRequest = UnityWebRequest.Get(JsonURL);
-        yield return jsonRequest.SendWebRequest();
-        
-        // // Load the VisualModel prefab from the Resources folder
-        // GameObject VisualModelPrefab = Resources.Load<GameObject>("Models/" + Name + "Model");
-
-        // // Instantiate the VisualModel at the origin with the prefab's rotation
-        // GameObject instantiatedVisualModel = Instantiate(VisualModelPrefab, new Vector3(0, 0, 0), VisualModelPrefab.transform.rotation);
-
-        // // Set the parent of the instantiated VisualModel to 'VisualModel'
-        // instantiatedVisualModel.transform.SetParent(VisualModel.transform);
-
-        // // Optionally, reset the local position if you want to keep it relative to the parent
-        // instantiatedVisualModel.transform.localPosition = Vector3.zero;
-
+        yield return  jsonRequest.SendWebRequest();
         
         if (jsonRequest.result == UnityWebRequest.Result.Success)
         {
@@ -273,23 +262,39 @@ public class UserInput : MonoBehaviour
             foreach(ModelPart part in ModelData.Parts)
             {
                 Debug.Log("Part Name: " + part.PartName);
+                Debug.Log("Diplay Name: " + part.DisplayName);
                 Debug.Log("Part Description: " + part.PartDescription);
             }
+            ImportModel(ModelData.URL);
         }
+    }
 
-        VisualModel.GetComponent<GltfAsset>().Url = ModelURL;   
-        foreach (Transform child in VisualModel.transform)
+    async void ImportModel(string ModelURL)
+    {
+        var gltfImport = new GltfImport();
+        await gltfImport.Load(ModelURL);
+        var instantiator = new GameObjectInstantiator(gltfImport, VisualModel.transform);
+        var success = await gltfImport.InstantiateMainSceneAsync(instantiator);
+
+        if (success) 
         {
-            // Add a MeshCollider to the child if it has a MeshFilter (which indicates it has a mesh)
-            MeshFilter meshFilter = child.GetComponent<MeshFilter>();
-            if (meshFilter != null)
+            Debug.Log("GLTF file is loaded.");
+
+            VisualModel.transform.localScale /= 5;
+
+            foreach (Transform child in VisualModel.transform)
             {
-                // Ensure the child doesn't already have a MeshCollider
-                if (child.GetComponent<MeshCollider>() == null)
+                // Add a MeshCollider to the child if it has a MeshFilter (which indicates it has a mesh)
+                MeshFilter meshFilter = child.GetComponent<MeshFilter>();
+                if (meshFilter != null)
                 {
-                    // Add a MeshCollider to the child
-                    child.gameObject.AddComponent<MeshCollider>();
-                    DefaultMaterials.Add(child.name, child.gameObject.GetComponent<Renderer>().material);
+                    // Ensure the child doesn't already have a MeshCollider
+                    if (child.GetComponent<MeshCollider>() == null)
+                    {
+                        // Add a MeshCollider to the child
+                        child.gameObject.AddComponent<MeshCollider>();
+                        DefaultMaterials.Add(child.name, child.gameObject.GetComponent<Renderer>().material);
+                    }
                 }
             }
         }
@@ -429,6 +434,7 @@ public class Model
 {
     public string ModelName;
     public string Description;
+    public string URL;
     public ModelPart[] Parts;
 
 }
@@ -437,5 +443,6 @@ public class Model
 public class ModelPart
 {
     public string PartName;
+    public string DisplayName;
     public string PartDescription;
 }
