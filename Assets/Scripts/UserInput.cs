@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using GLTFast;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -11,11 +12,6 @@ public class UserInput : MonoBehaviour
     public float rotationSpeed = 100f; // Rotation speed
     public float movementSpeed = 0.2f; // Movement speed
     public float defaultZoom;
-
-    // Adjustable parameters for the tip's behavior
-    public float tipMovementFactor = 1f; // Factor for how far the tip moves relative to zoom
-    public float tipMinScale = 0.1f; // Minimum scale for the tip
-    public float tipMaxScale = 1f;  // Maximum scale for the tip
 
     public string Name;
 
@@ -43,6 +39,10 @@ public class UserInput : MonoBehaviour
 
     private UIScript uiScript;
     private TextMeshProUGUI scaleValue;
+
+    private Model ModelData;
+
+    public GameObject VideoPlayer;
 
     public void Start()
     {
@@ -82,7 +82,13 @@ public class UserInput : MonoBehaviour
         if (selectedPart != null)
         {
             Tip.SetActive(true);
-            Tip.transform.GetChild(0).GetChild(0).GetComponent<TextMeshProUGUI>().text = selectedPart.name;
+            foreach (ModelPart i in ModelData.Parts)
+            {
+                if(selectedPart.name.Contains(i.PartName))
+                {
+                    Tip.transform.Find("BG").Find("Text").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
+                }
+            }
         }
         else
         {
@@ -255,9 +261,9 @@ public class UserInput : MonoBehaviour
         if (jsonRequest.result == UnityWebRequest.Result.Success)
         {
             string json = jsonRequest.downloadHandler.text;
-            Model ModelData = JsonUtility.FromJson<Model>(json);
-            Debug.Log("Model Name: " + ModelData.ModelName);
-            Debug.Log("Description: " + ModelData.Description);
+            ModelData = JsonUtility.FromJson<Model>(json);
+            //Debug.Log("Model Name: " + ModelData.ModelName);
+            //Debug.Log("Description: " + ModelData.Description);
             
             foreach(ModelPart part in ModelData.Parts)
             {
@@ -278,11 +284,11 @@ public class UserInput : MonoBehaviour
 
         if (success) 
         {
-            Debug.Log("GLTF file is loaded.");
+            //Debug.Log("GLTF file is loaded.");
 
             VisualModel.transform.localScale /= 5;
 
-            foreach (Transform child in VisualModel.transform)
+            foreach (Transform child in VisualModel.transform.GetChild(0))
             {
                 // Add a MeshCollider to the child if it has a MeshFilter (which indicates it has a mesh)
                 MeshFilter meshFilter = child.GetComponent<MeshFilter>();
@@ -297,6 +303,8 @@ public class UserInput : MonoBehaviour
                     }
                 }
             }
+
+            VideoPlayer.SetActive(false);
         }
     }
 
@@ -386,7 +394,23 @@ public class UserInput : MonoBehaviour
                     uiScript.opacitySlider.value = 1f;
                 }
             }
+
+            UpdateSideMenu();
         }
+    }
+
+    public void UpdateSideMenu()
+    {
+        GameObject SideMenu = GameObject.Find("SideMenu");
+        foreach (ModelPart i in ModelData.Parts)
+        {
+            if(selectedPart.name.Contains(i.PartName))
+            {
+                SideMenu.transform.Find("Part").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
+                SideMenu.transform.Find("Details").GetComponent<TextMeshProUGUI>().text = i.PartDescription;
+            }
+        }
+        
     }
 
     public void SetXray()

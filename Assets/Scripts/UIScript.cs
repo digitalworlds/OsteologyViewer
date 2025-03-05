@@ -158,5 +158,5 @@ public class UIScript : MonoBehaviour
     {
         animator.SetTrigger("Move"); // Trigger the closing animation
         menu = false;  // Set the menu state to closed
-    }
+    } 
 }
