@@ -706,6 +706,11 @@ PrefabInstance:
       propertyPath: m_Color.a
       value: 0.39215687
       objectReference: {fileID: 0}
+    - target: {fileID: 632054158873916237, guid: 166d05d5cd22781479ccc7eb636ba07e,
+        type: 3}
+      propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2184929458768375188, guid: 166d05d5cd22781479ccc7eb636ba07e,
         type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -735,6 +740,21 @@ PrefabInstance:
         type: 3}
       propertyPath: m_fontColor32.rgba
       value: 4278190080
+      objectReference: {fileID: 0}
+    - target: {fileID: 3470655929506312625, guid: 166d05d5cd22781479ccc7eb636ba07e,
+        type: 3}
+      propertyPath: m_UiScaleMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3470655929506312625, guid: 166d05d5cd22781479ccc7eb636ba07e,
+        type: 3}
+      propertyPath: m_ReferenceResolution.x
+      value: 1920
+      objectReference: {fileID: 0}
+    - target: {fileID: 3470655929506312625, guid: 166d05d5cd22781479ccc7eb636ba07e,
+        type: 3}
+      propertyPath: m_ReferenceResolution.y
+      value: 1080
       objectReference: {fileID: 0}
     - target: {fileID: 5359767096980244701, guid: 166d05d5cd22781479ccc7eb636ba07e,
         type: 3}
@@ -4587,7 +4607,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1711233249}
         m_TargetAssemblyTypeName: UIScript, Assembly-CSharp
-        m_MethodName: SelectMenuButton
+        m_MethodName: SaveView
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

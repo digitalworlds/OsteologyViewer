@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using GLTFast;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
 
