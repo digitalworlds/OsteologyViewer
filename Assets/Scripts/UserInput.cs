@@ -43,6 +43,12 @@ public class UserInput : MonoBehaviour
 
     public GameObject VideoPlayer;
 
+    public void LoadFromHTML(string url)
+    {
+        StartCoroutine(LoadModel(url));
+        Name = "Loading...";
+    }
+
     public void Start()
     {
         Zoom = defaultZoom;
@@ -71,8 +77,6 @@ public class UserInput : MonoBehaviour
         Tip.SetActive(false);
 
         uiScript = GameObject.Find("OverlayUI").GetComponent<UIScript>();
-
-        StartCoroutine(LoadModel("https://digitalworlds.github.io/CURE25_Test/models/CP17/CP17.json"));
     }
 
     public void Update()
@@ -263,6 +267,8 @@ public class UserInput : MonoBehaviour
             ModelData = JsonUtility.FromJson<Model>(json);
             //Debug.Log("Model Name: " + ModelData.ModelName);
             //Debug.Log("Description: " + ModelData.Description);
+
+            Name = ModelData.ModelName;
             
             foreach(ModelPart part in ModelData.Parts)
             {
