@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Unity WebGL Player | WebGL Model Viewer</title>
+  </head>
+  <body style="text-align: center; padding: 0; border: 0; margin: 0;">
+    <canvas id="unity-canvas" width="960" height="540" tabindex="-1" style="width: 960px; height: 540px; background: #231F20"></canvas>
+    <script src="Build/Viewer.loader.js"></script>
+    <script>
+      // Create a variable to hold the Unity instance
+      let unityInstance;
+
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // Mobile device style: fill the whole browser client area with the game canvas:
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+
+        var canvas = document.querySelector("#unity-canvas");
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+        canvas.style.position = "fixed";
+
+        document.body.style.textAlign = "left";
+      }
+
+      // Initialize the Unity WebGL instance and assign it to the unityInstance variable
+      createUnityInstance(document.querySelector("#unity-canvas"), {
+        dataUrl: "Build/Viewer.data",
+        frameworkUrl: "Build/Viewer.framework.js",
+        codeUrl: "Build/Viewer.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "OsteologyLab",
+        productName: "WebGL Model Viewer",
+        productVersion: "0.1.0",
+      }).then(function (instance) {
+        // Store the instance in the variable for later use
+        unityInstance = instance;
+      }).catch(function (error) {
+        console.error("Unity instance creation failed: ", error);
+      });
+    </script>
+  </body>
+
+  <form>
+    <label for="name">Enter URL:</label>
+    <input type="text" id="name" name="name">
+    
+    <!-- Confirm Button that triggers the JavaScript function -->
+    <div style="border:solid 5px black; width:200px; height:20px; margin:auto; text-align:center" onclick="confirmUrl()">Confirm</div>
+  </form>
+
+  <script>
+    // Function to confirm the URL input and send it to Unity
+    function confirmUrl() {
+      const url = document.getElementById('name').value;
+
+      // Check if the input is not empty
+      if (url.trim() === "") {
+        alert("Please enter a valid URL.");
+      } else {
+        // If unityInstance is available, send the message
+        if (unityInstance) {
+          unityInstance.SendMessage('Manager', 'LoadFromHTML', url);
+        } else {
+          alert("Unity instance is not loaded yet.");
+        }
+      }
+    }
+  </script>
+
+</html>

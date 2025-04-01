@@ -17,6 +17,7 @@ public class UserInput : MonoBehaviour
     // Dictionary to store materials for each part of the VisualModel
     public Dictionary<string, Material> DefaultMaterials = new Dictionary<string, Material>();
     public Material SelectedMaterial;
+    private Material DefaultMaterial;
     public Material DefaultMaterialXray;
     public Material SelectedMaterialXray;
 
@@ -275,6 +276,7 @@ public class UserInput : MonoBehaviour
                 Debug.Log("Part Name: " + part.PartName);
                 Debug.Log("Diplay Name: " + part.DisplayName);
                 Debug.Log("Part Description: " + part.PartDescription);
+                Debug.Log("Part Color: " + part.PartColor);
             }
             ImportModel(ModelData.URL);
         }
@@ -305,6 +307,7 @@ public class UserInput : MonoBehaviour
                         // Add a MeshCollider to the child
                         child.gameObject.AddComponent<MeshCollider>();
                         DefaultMaterials.Add(child.name, child.gameObject.GetComponent<Renderer>().material);
+                        DefaultMaterial = child.GetComponent<Renderer>().material;
                     }
                 }
             }
@@ -433,8 +436,31 @@ public class UserInput : MonoBehaviour
     {
         foreach(Transform child in VisualModel.transform.GetChild(0))
         {
-            child.GetComponent<Renderer>().material = DefaultMaterials[child.name];
+            child.GetComponent<Renderer>().material = DefaultMaterial;
+            DefaultMaterials[child.name] = child.GetComponent<Renderer>().material;
         }
+
+        selectedPart = null;
+        uiScript.xrayOn = false;
+        uiScript.opacitySlider.wholeNumbers = true;
+    }
+
+    public void SetColors()
+    {
+        foreach(Transform child in VisualModel.transform.GetChild(0))
+        {
+            foreach (ModelPart i in ModelData.Parts)
+            {
+                if(child.name.Contains(i.PartName))
+                {
+                    child.GetComponent<Renderer>().enabled = true;
+                    Material material = Resources.Load<Material>("Materials/" + i.PartColor);
+                    child.GetComponent<Renderer>().material = material;
+                    DefaultMaterials[child.name] = child.GetComponent<Renderer>().material;
+                }
+            }
+        }
+
         selectedPart = null;
         uiScript.xrayOn = false;
         uiScript.opacitySlider.wholeNumbers = true;
@@ -474,4 +500,5 @@ public class ModelPart
     public string PartName;
     public string DisplayName;
     public string PartDescription;
+    public string PartColor;
 }
