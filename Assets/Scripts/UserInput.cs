@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using GLTFast;
 using TMPro;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -454,7 +455,14 @@ public class UserInput : MonoBehaviour
                 if(child.name.Contains(i.PartName))
                 {
                     child.GetComponent<Renderer>().enabled = true;
-                    Material material = Resources.Load<Material>("Materials/" + i.PartColor);
+                    //Material material = Resources.Load<Material>("Materials/" + i.PartColor);
+                    Material material = new Material(DefaultMaterial);
+                    Color color;
+                    if (ColorUtility.TryParseHtmlString(i.PartColor, out color))
+                    {
+                        // Set the color of the object's material
+                        material.color = color;
+                    }
                     child.GetComponent<Renderer>().material = material;
                     DefaultMaterials[child.name] = child.GetComponent<Renderer>().material;
                 }
