@@ -2,10 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using GLTFast;
+using GLTFast.Schema;
 using TMPro;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
 
 public class UserInput : MonoBehaviour
 {   
@@ -16,11 +17,11 @@ public class UserInput : MonoBehaviour
     public string Name;
 
     // Dictionary to store materials for each part of the VisualModel
-    public Dictionary<string, Material> DefaultMaterials = new Dictionary<string, Material>();
-    public Material SelectedMaterial;
-    private Material DefaultMaterial;
-    public Material DefaultMaterialXray;
-    public Material SelectedMaterialXray;
+    public Dictionary<string, UnityEngine.Material> DefaultMaterials = new Dictionary<string, UnityEngine.Material>();
+    public UnityEngine.Material SelectedMaterial;
+    private UnityEngine.Material DefaultMaterial;
+    public UnityEngine.Material DefaultMaterialXray;
+    public UnityEngine.Material SelectedMaterialXray;
 
     private Vector3 lastMousePosition;
     private bool isRightClickPressed = false;
@@ -28,12 +29,11 @@ public class UserInput : MonoBehaviour
 
     private GameObject VisualModel;
     private GameObject Camera;
-    private Camera CameraComponent;
+    private UnityEngine.Camera CameraComponent;
     private float Zoom;
 
     private GameObject selectedPart;
     private GameObject Tip;
-    private LineRenderer lineRenderer;
 
     // List of saved views (each saved view stores position, rotation, and orthographic size)
     private List<SavedView> SavedViews = new List<SavedView>();
@@ -45,6 +45,8 @@ public class UserInput : MonoBehaviour
 
     public GameObject VideoPlayer;
 
+    private bool CheckedActiveScene;
+
     public void LoadFromHTML(string url)
     {
         StartCoroutine(LoadModel(url));
@@ -53,11 +55,12 @@ public class UserInput : MonoBehaviour
 
     public void Start()
     {
+        CheckedActiveScene = false;
         Zoom = defaultZoom;
 
         VisualModel = GameObject.Find("Model");
         Camera = GameObject.Find("Main Camera");
-        CameraComponent = Camera.GetComponent<Camera>(); // Get the Camera component
+        CameraComponent = Camera.GetComponent<UnityEngine.Camera>(); // Get the Camera component
 
         scaleValue = GameObject.Find("ScaleValue").GetComponent<TextMeshProUGUI>();
 
@@ -81,8 +84,22 @@ public class UserInput : MonoBehaviour
         uiScript = GameObject.Find("OverlayUI").GetComponent<UIScript>();
     }
 
+    void OnSceneChanged(UnityEngine.SceneManagement.Scene previousScene, UnityEngine.SceneManagement.Scene newScene)
+    {
+        // Scene has changed!
+        CheckedActiveScene = false;
+    }
+
     public void Update()
     {
+        SceneManager.activeSceneChanged -= OnSceneChanged;
+
+        if(SceneManager.GetActiveScene().name.Contains("Taxon"))
+        {
+            CheckedActiveScene = true;
+            SetBoneAndTeeth();
+        }
+
         // Turn on tooltip
         if (selectedPart != null)
         {
@@ -278,6 +295,7 @@ public class UserInput : MonoBehaviour
                 Debug.Log("Diplay Name: " + part.DisplayName);
                 Debug.Log("Part Description: " + part.PartDescription);
                 Debug.Log("Part Color: " + part.PartColor);
+                Debug.Log("Part Type: " + part.PartType);
             }
             ImportModel(ModelData.URL);
         }
@@ -323,7 +341,7 @@ public class UserInput : MonoBehaviour
         Vector3 mousePosition = Input.mousePosition;
 
         // Step 2: Convert mouse position to a ray from the camera to the world space
-        Ray ray = Camera.GetComponent<Camera>().ScreenPointToRay(mousePosition);
+        Ray ray = Camera.GetComponent<UnityEngine.Camera>().ScreenPointToRay(mousePosition);
 
         // Step 3: Perform the raycast
         RaycastHit hit;
@@ -456,7 +474,7 @@ public class UserInput : MonoBehaviour
                 {
                     child.GetComponent<Renderer>().enabled = true;
                     //Material material = Resources.Load<Material>("Materials/" + i.PartColor);
-                    Material material = new Material(DefaultMaterial);
+                    UnityEngine.Material material = new UnityEngine.Material(DefaultMaterial);
                     Color color;
                     if (ColorUtility.TryParseHtmlString(i.PartColor, out color))
                     {
@@ -472,6 +490,73 @@ public class UserInput : MonoBehaviour
         selectedPart = null;
         uiScript.xrayOn = false;
         uiScript.opacitySlider.wholeNumbers = true;
+    }
+
+    public void SetBoneAndTeeth()
+    {
+        foreach(Transform child in VisualModel.transform.GetChild(0))
+        {
+            foreach (ModelPart i in ModelData.Parts)
+            {
+                if(child.name.Contains(i.PartName))
+                {
+                    if(i.PartType == "Bone")
+                    {
+                        child.GetComponent<Renderer>().material = Resources.Load<UnityEngine.Material>("Materials/BoneTexture");
+                    }
+                    else
+                    {
+                        child.GetComponent<Renderer>().material = Resources.Load<UnityEngine.Material>("Materials/BoneTexture");
+                        child.GetComponent<Renderer>().materials[1] = Resources.Load<UnityEngine.Material>("Materials/TeethTexture");
+                    }
+                }
+            }
+        }
+
+        selectedPart = null;
+        uiScript.xrayOn = false;
+        uiScript.opacitySlider.wholeNumbers = true;
+    }
+
+    public void HideMandible()
+    {
+        foreach(Transform child in VisualModel.transform.GetChild(0))
+        {
+            foreach (ModelPart i in ModelData.Parts)
+            {
+                if(child.name.Contains(i.PartName) && i.PartName.Contains("Mandible"))
+                {
+                    if(child.gameObject.activeSelf)
+                    {
+                        child.gameObject.SetActive(false);
+                    }
+                    else
+                    {
+                        child.gameObject.SetActive(true);
+                    }
+                }
+            }
+        }
+    }
+    public void HideCranialVault()
+    {
+        foreach(Transform child in VisualModel.transform.GetChild(0))
+        {
+            foreach (ModelPart i in ModelData.Parts)
+            {
+                if(child.name.Contains(i.PartName) && i.PartName.Contains("Calotte"))
+                {
+                    if(child.gameObject.activeSelf)
+                    {
+                        child.gameObject.SetActive(false);
+                    }
+                    else
+                    {
+                        child.gameObject.SetActive(true);
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -509,4 +594,5 @@ public class ModelPart
     public string DisplayName;
     public string PartDescription;
     public string PartColor;
+    public string PartType;
 }
