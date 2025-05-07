@@ -82,6 +82,8 @@ public class UserInput : MonoBehaviour
         Tip.SetActive(false);
 
         uiScript = GameObject.Find("OverlayUI").GetComponent<UIScript>();
+
+        StartCoroutine(LoadModel("https://digitalworlds.github.io/CURE25_Test/models/AotusTaxonPage/Aotus108.json"));
     }
 
     void OnSceneChanged(UnityEngine.SceneManagement.Scene previousScene, UnityEngine.SceneManagement.Scene newScene)
@@ -507,7 +509,7 @@ public class UserInput : MonoBehaviour
                     else
                     {
                         child.GetComponent<Renderer>().material = Resources.Load<UnityEngine.Material>("Materials/BoneTexture");
-                        child.GetComponent<Renderer>().materials[1] = Resources.Load<UnityEngine.Material>("Materials/TeethTexture");
+                        //child.GetComponent<Renderer>().materials[1] = Resources.Load<UnityEngine.Material>("Materials/TeethTexture");
                     }
                 }
             }
@@ -515,7 +517,6 @@ public class UserInput : MonoBehaviour
 
         selectedPart = null;
         uiScript.xrayOn = false;
-        uiScript.opacitySlider.wholeNumbers = true;
     }
 
     public void HideMandible()
@@ -544,7 +545,7 @@ public class UserInput : MonoBehaviour
         {
             foreach (ModelPart i in ModelData.Parts)
             {
-                if(child.name.Contains(i.PartName) && i.PartName.Contains("Calotte"))
+                if(child.name.Contains(i.PartName) && child.name.Contains("Calotte"))
                 {
                     if(child.gameObject.activeSelf)
                     {
