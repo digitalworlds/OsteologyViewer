@@ -6806,7 +6806,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 053970fd2d8027d419100123b3200926, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  opacitySlider: {fileID: 0}
+  opacitySlider: {fileID: 415045305}
+  titleText: {fileID: 1911205086}
   xrayOn: 0
 --- !u!210 &1711233250
 SortingGroup:
@@ -6983,6 +6984,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2ef892a23684c144857213adb2cdbdb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ColorDictionaryURL: https://digitalworlds.github.io/CURE25_Test/models/ColorDictionary.json
   rotationSpeed: 50
   movementSpeed: 0.2
   defaultZoom: 4

@@ -48,8 +48,6 @@ public class UserInput : MonoBehaviour
 
     public GameObject VideoPlayer;
 
-    private bool CheckedActiveScene;
-
     public void LoadFromHTML(string url)
     {
         StartCoroutine(LoadModel(url));
@@ -58,7 +56,6 @@ public class UserInput : MonoBehaviour
 
     public void Start()
     {
-        CheckedActiveScene = false;
         Zoom = defaultZoom;
 
         VisualModel = GameObject.Find("Model");
@@ -89,22 +86,8 @@ public class UserInput : MonoBehaviour
         StartCoroutine(LoadModel("https://digitalworlds.github.io/CURE25_Test/models/AotusTaxonPage/Aotus108.json"));
     }
 
-    void OnSceneChanged(Scene previousScene, Scene newScene)
-    {
-        // Scene has changed!
-        CheckedActiveScene = false;
-    }
-
     public void Update()
     {
-        SceneManager.activeSceneChanged -= OnSceneChanged;
-
-        if(SceneManager.GetActiveScene().name.Contains("Taxon"))
-        {
-            CheckedActiveScene = true;
-            SetBoneAndTeeth();
-        }
-
         // Turn on tooltip
         if (selectedPart != null)
         {
@@ -278,6 +261,29 @@ public class UserInput : MonoBehaviour
             CameraComponent.orthographicSize = savedView.OrthographicSize;
         }
     }
+    public IEnumerator LoadModel(string JsonURL)
+    {
+        // First, load the JSON metadata
+        UnityWebRequest jsonRequest = UnityWebRequest.Get(JsonURL);
+        yield return  jsonRequest.SendWebRequest();
+        
+        if (jsonRequest.result == UnityWebRequest.Result.Success)
+        {
+            string json = jsonRequest.downloadHandler.text;
+            ModelData = JsonUtility.FromJson<Model>(json);
+
+            Name = ModelData.ModelName;
+            
+            // foreach(ModelPart part in ModelData.Parts)
+            // {
+            //     Debug.Log("Part Name: " + part.PartName);
+            //     Debug.Log("Diplay Name: " + part.DisplayName);
+            //     Debug.Log("Part Description: " + part.PartDescription);
+            // }
+            ImportModel(ModelData.URL);
+            StartCoroutine(LoadColorDictionary(ColorDictionaryURL));
+        }
+    }
 
     public IEnumerator LoadColorDictionary(string colorDictionaryURL)
     {
@@ -289,36 +295,14 @@ public class UserInput : MonoBehaviour
             string json = jsonRequest.downloadHandler.text;
             DictionaryWrapper wrapper = JsonUtility.FromJson<DictionaryWrapper>(json);
 
-            foreach (var kv in wrapper.items)
+            foreach (var kv in wrapper.ColorDictionary)
             {
                 colorDictionary[kv.key] = kv.value;
+                Debug.Log(kv.key + ", " + kv.value);
             }
         }
     }
-    public IEnumerator LoadModel(string JsonURL)
-    {
-        // First, load the JSON metadata
-        UnityWebRequest jsonRequest = UnityWebRequest.Get(JsonURL);
-        yield return  jsonRequest.SendWebRequest();
-        
-        if (jsonRequest.result == UnityWebRequest.Result.Success)
-        {
-            string json = jsonRequest.downloadHandler.text;
-            ModelData = JsonUtility.FromJson<Model>(json);
-            //Debug.Log("Model Name: " + ModelData.ModelName);
-            //Debug.Log("Description: " + ModelData.Description);
 
-            Name = ModelData.ModelName;
-            
-            foreach(ModelPart part in ModelData.Parts)
-            {
-                Debug.Log("Part Name: " + part.PartName);
-                Debug.Log("Diplay Name: " + part.DisplayName);
-                Debug.Log("Part Description: " + part.PartDescription);
-            }
-            ImportModel(ModelData.URL);
-        }
-    }
 
     async void ImportModel(string ModelURL)
     {
@@ -351,6 +335,12 @@ public class UserInput : MonoBehaviour
             }
 
             VideoPlayer.SetActive(false);
+
+            if(SceneManager.GetActiveScene().name.Contains("Taxon"))
+            {
+                SetBoneAndTeeth();
+            }
+
         }
     }
 
@@ -485,23 +475,44 @@ public class UserInput : MonoBehaviour
 
     public void SetColors()
     {
-        foreach(Transform child in VisualModel.transform.GetChild(0))
+        foreach (Transform child in VisualModel.transform.GetChild(0))
         {
-            foreach (ModelPart i in ModelData.Parts)
+            foreach (var entry in colorDictionary)
             {
-                if(child.name.Contains(i.PartName))
+                string key = entry.Key;
+                string value = entry.Value;
+                
+                Debug.Log(key + ", " + value);
+
+                if (child.name.Contains(key))
                 {
                     child.GetComponent<Renderer>().enabled = true;
-                    //Material material = Resources.Load<Material>("Materials/" + i.PartColor);
-                    Material material = new Material(DefaultMaterial);
-                    Color color;
-                    if (ColorUtility.TryParseHtmlString(colorDictionary[i.PartName], out color))
+
+                    Material material;
+
+                    if (ColorUtility.TryParseHtmlString(value, out Color color))
                     {
-                        // Set the color of the object's material
+                        material = new Material(DefaultMaterial);
                         material.color = color;
                     }
+                    else if (value == "Bone")
+                    {
+                        material = Resources.Load<Material>("Materials/BoneTexture");
+                    }
+                    else if (value == "Teeth")
+                    {
+                        material = Resources.Load<Material>("Materials/TeethTexture");
+                    }
+                    else
+                    {
+                        // Fallback to default material if value isn't a color or known type
+                        material = new Material(DefaultMaterial);
+                    }
+
                     child.GetComponent<Renderer>().material = material;
-                    DefaultMaterials[child.name] = child.GetComponent<Renderer>().material;
+                    DefaultMaterials[child.name] = material;
+
+                    break; // Stop checking once we've found a match
                 }
             }
         }
@@ -511,23 +522,29 @@ public class UserInput : MonoBehaviour
         uiScript.opacitySlider.wholeNumbers = true;
     }
 
+
     public void SetBoneAndTeeth()
     {
-        foreach(Transform child in VisualModel.transform.GetChild(0))
+        foreach (Transform child in VisualModel.transform.GetChild(0))
         {
-            foreach (ModelPart i in ModelData.Parts)
+            foreach (var entry in colorDictionary)
             {
-                if(child.name.Contains(i.PartName))
+                string key = entry.Key;
+                string value = entry.Value;
+
+                if (child.name.Contains(key))
                 {
-                    if(i.PartType == "Bone")
+                    if (value == "Bone")
                     {
                         child.GetComponent<Renderer>().material = Resources.Load<Material>("Materials/BoneTexture");
                     }
-                    else
+                    else if (value == "Teeth")
                     {
-                        child.GetComponent<Renderer>().material = Resources.Load<Material>("Materials/BoneTexture");
-                        //child.GetComponent<Renderer>().materials[1] = Resources.Load<Material>("Materials/TeethTexture");
+                        child.GetComponent<Renderer>().material = Resources.Load<Material>("Materials/TeethTexture");
                     }
+
+                    // Break after match to avoid unnecessary checks
+                    break;
                 }
             }
         }
@@ -616,11 +633,11 @@ public class ModelPart
 [Serializable]
 public class DictionaryWrapper
 {
-    public List<Item> items;
+    public List<Colors> ColorDictionary;
 }
 
 [Serializable]
-public class Item
+public class Colors
 {
     public string key;
     public string value;

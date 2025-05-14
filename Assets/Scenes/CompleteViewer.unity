@@ -6311,6 +6311,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2ef892a23684c144857213adb2cdbdb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ColorDictionaryURL: https://digitalworlds.github.io/CURE25_Test/models/ColorDictionary.json
   rotationSpeed: 50
   movementSpeed: 0.2
   defaultZoom: 4
