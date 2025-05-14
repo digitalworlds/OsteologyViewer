@@ -2,14 +2,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using GLTFast;
-using GLTFast.Schema;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
+
 public class UserInput : MonoBehaviour
 {   
+    public string ColorDictionaryURL;
+    private Dictionary<string, string> colorDictionary = new Dictionary<string, string>();
+
     public float rotationSpeed = 100f; // Rotation speed
     public float movementSpeed = 0.2f; // Movement speed
     public float defaultZoom;
@@ -17,11 +20,11 @@ public class UserInput : MonoBehaviour
     public string Name;
 
     // Dictionary to store materials for each part of the VisualModel
-    public Dictionary<string, UnityEngine.Material> DefaultMaterials = new Dictionary<string, UnityEngine.Material>();
-    public UnityEngine.Material SelectedMaterial;
-    private UnityEngine.Material DefaultMaterial;
-    public UnityEngine.Material DefaultMaterialXray;
-    public UnityEngine.Material SelectedMaterialXray;
+    public Dictionary<string, Material> DefaultMaterials = new Dictionary<string, Material>();
+    public Material SelectedMaterial;
+    private Material DefaultMaterial;
+    public Material DefaultMaterialXray;
+    public Material SelectedMaterialXray;
 
     private Vector3 lastMousePosition;
     private bool isRightClickPressed = false;
@@ -29,7 +32,7 @@ public class UserInput : MonoBehaviour
 
     private GameObject VisualModel;
     private GameObject Camera;
-    private UnityEngine.Camera CameraComponent;
+    private Camera CameraComponent;
     private float Zoom;
 
     private GameObject selectedPart;
@@ -60,7 +63,7 @@ public class UserInput : MonoBehaviour
 
         VisualModel = GameObject.Find("Model");
         Camera = GameObject.Find("Main Camera");
-        CameraComponent = Camera.GetComponent<UnityEngine.Camera>(); // Get the Camera component
+        CameraComponent = Camera.GetComponent<Camera>(); // Get the Camera component
 
         scaleValue = GameObject.Find("ScaleValue").GetComponent<TextMeshProUGUI>();
 
@@ -86,7 +89,7 @@ public class UserInput : MonoBehaviour
         StartCoroutine(LoadModel("https://digitalworlds.github.io/CURE25_Test/models/AotusTaxonPage/Aotus108.json"));
     }
 
-    void OnSceneChanged(UnityEngine.SceneManagement.Scene previousScene, UnityEngine.SceneManagement.Scene newScene)
+    void OnSceneChanged(Scene previousScene, Scene newScene)
     {
         // Scene has changed!
         CheckedActiveScene = false;
@@ -276,6 +279,22 @@ public class UserInput : MonoBehaviour
         }
     }
 
+    public IEnumerator LoadColorDictionary(string colorDictionaryURL)
+    {
+        UnityWebRequest jsonRequest = UnityWebRequest.Get(colorDictionaryURL);
+        yield return jsonRequest.SendWebRequest();
+
+        if (jsonRequest.result == UnityWebRequest.Result.Success)
+        {
+            string json = jsonRequest.downloadHandler.text;
+            DictionaryWrapper wrapper = JsonUtility.FromJson<DictionaryWrapper>(json);
+
+            foreach (var kv in wrapper.items)
+            {
+                colorDictionary[kv.key] = kv.value;
+            }
+        }
+    }
     public IEnumerator LoadModel(string JsonURL)
     {
         // First, load the JSON metadata
@@ -296,8 +315,6 @@ public class UserInput : MonoBehaviour
                 Debug.Log("Part Name: " + part.PartName);
                 Debug.Log("Diplay Name: " + part.DisplayName);
                 Debug.Log("Part Description: " + part.PartDescription);
-                Debug.Log("Part Color: " + part.PartColor);
-                Debug.Log("Part Type: " + part.PartType);
             }
             ImportModel(ModelData.URL);
         }
@@ -343,7 +360,7 @@ public class UserInput : MonoBehaviour
         Vector3 mousePosition = Input.mousePosition;
 
         // Step 2: Convert mouse position to a ray from the camera to the world space
-        Ray ray = Camera.GetComponent<UnityEngine.Camera>().ScreenPointToRay(mousePosition);
+        Ray ray = Camera.GetComponent<Camera>().ScreenPointToRay(mousePosition);
 
         // Step 3: Perform the raycast
         RaycastHit hit;
@@ -476,9 +493,9 @@ public class UserInput : MonoBehaviour
                 {
                     child.GetComponent<Renderer>().enabled = true;
                     //Material material = Resources.Load<Material>("Materials/" + i.PartColor);
-                    UnityEngine.Material material = new UnityEngine.Material(DefaultMaterial);
+                    Material material = new Material(DefaultMaterial);
                     Color color;
-                    if (ColorUtility.TryParseHtmlString(i.PartColor, out color))
+                    if (ColorUtility.TryParseHtmlString(colorDictionary[i.PartName], out color))
                     {
                         // Set the color of the object's material
                         material.color = color;
@@ -504,12 +521,12 @@ public class UserInput : MonoBehaviour
                 {
                     if(i.PartType == "Bone")
                     {
-                        child.GetComponent<Renderer>().material = Resources.Load<UnityEngine.Material>("Materials/BoneTexture");
+                        child.GetComponent<Renderer>().material = Resources.Load<Material>("Materials/BoneTexture");
                     }
                     else
                     {
-                        child.GetComponent<Renderer>().material = Resources.Load<UnityEngine.Material>("Materials/BoneTexture");
-                        //child.GetComponent<Renderer>().materials[1] = Resources.Load<UnityEngine.Material>("Materials/TeethTexture");
+                        child.GetComponent<Renderer>().material = Resources.Load<Material>("Materials/BoneTexture");
+                        //child.GetComponent<Renderer>().materials[1] = Resources.Load<Material>("Materials/TeethTexture");
                     }
                 }
             }
@@ -594,6 +611,17 @@ public class ModelPart
     public string PartName;
     public string DisplayName;
     public string PartDescription;
-    public string PartColor;
-    public string PartType;
+}
+
+[Serializable]
+public class DictionaryWrapper
+{
+    public List<Item> items;
+}
+
+[Serializable]
+public class Item
+{
+    public string key;
+    public string value;
 }
