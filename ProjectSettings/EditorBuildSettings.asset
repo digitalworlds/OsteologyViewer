@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/CompleteViewer.unity
+    path: Assets/Scenes/UniversalViewer.unity
     guid: 75fecdd09229f844d82fa1e7d622e949
   m_configObjects: {}

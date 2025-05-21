@@ -11,6 +11,11 @@ public class UIScript : MonoBehaviour
     public Slider opacitySlider; // Slider for opacity adjustment
     private TextMeshProUGUI titleText; 
 
+    public RectTransform scaleBarUI; // The visual bar (e.g., a black line)
+    public TextMeshProUGUI scaleLabel; // The label showing real-world length
+    public float referenceLengthInMeters = 1f; // How long the bar represents, in real-world meters
+    public Camera orthoCamera;
+
     private int numOfSavedViews;
     private List<GameObject> savedViews = new List<GameObject>(); // This should be initialized
     private List<GameObject> defaultViews = new List<GameObject>();
@@ -32,6 +37,10 @@ public class UIScript : MonoBehaviour
         UserInput = GameObject.Find("Manager").GetComponent<UserInput>();
         animator = GameObject.Find("SideMenu").GetComponent<Animator>();
         titleText = GameObject.Find("Title").GetComponent<TextMeshProUGUI>();
+
+        scaleBarUI = GameObject.Find("Scale").GetComponent<RectTransform>();
+        scaleLabel = GameObject.Find("ScaleValue").GetComponent<TextMeshProUGUI>();
+        orthoCamera = Camera.main;
 
         numOfSavedViews = -1;
         
@@ -68,6 +77,7 @@ public class UIScript : MonoBehaviour
     {
         titleText.text = UserInput.Name;
         ChangeOpacity();
+        UpdateScaleBar();
     }
 
     public void ZoomIn()
@@ -159,4 +169,30 @@ public class UIScript : MonoBehaviour
         animator.SetTrigger("Move"); // Trigger the closing animation
         menu = false;  // Set the menu state to closed
     } 
+
+    private void UpdateScaleBar()
+    {
+        GameObject currentPart = UserInput.GetCurrentPart();
+        if (currentPart == null) return;
+
+        float modelScale = currentPart.transform.localScale.x; // Assume uniform scale
+        float effectiveLength = referenceLengthInMeters * modelScale;
+
+        // World units per pixel = (orthographic size * 2) / screen height
+        float unitsPerPixel = (orthoCamera.orthographicSize * 2f) / Screen.height;
+        float pixelsPerUnit = 1f / unitsPerPixel;
+
+        float barLengthInPixels = effectiveLength * pixelsPerUnit;
+
+        // Update UI element
+        Vector2 size = scaleBarUI.sizeDelta;
+        size.x = barLengthInPixels;
+        scaleBarUI.sizeDelta = size;
+
+        // Update the label
+        if (referenceLengthInMeters >= 1f)
+            scaleLabel.text = $"{referenceLengthInMeters * modelScale:F2} m";
+        else
+            scaleLabel.text = $"{referenceLengthInMeters * modelScale * 100f:F0} cm";
+    }
 }
