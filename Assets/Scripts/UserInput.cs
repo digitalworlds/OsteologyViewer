@@ -7,7 +7,6 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
-
 public class UserInput : MonoBehaviour
 {   
     public string ColorDictionaryURL;
@@ -18,6 +17,7 @@ public class UserInput : MonoBehaviour
     public float defaultZoom;
 
     public string Name;
+    public string URL;
 
     // Dictionary to store materials for each part of the VisualModel
     public Dictionary<string, Material> DefaultMaterials = new Dictionary<string, Material>();
@@ -64,7 +64,7 @@ public class UserInput : MonoBehaviour
 
         scaleValue = GameObject.Find("ScaleValue").GetComponent<TextMeshProUGUI>();
 
-        //LoadModel(Name);
+        ImportModel(URL);
         selectedPart = null;
 
         // Initialize the DefaultMaterials dictionary by iterating through VisualModel children
