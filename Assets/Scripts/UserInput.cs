@@ -56,6 +56,7 @@ public class UserInput : MonoBehaviour
 
     public void Start()
     {
+        Name = "Loading...";
         Zoom = defaultZoom;
 
         VisualModel = GameObject.Find("Model");
@@ -64,7 +65,7 @@ public class UserInput : MonoBehaviour
 
         scaleValue = GameObject.Find("ScaleValue").GetComponent<TextMeshProUGUI>();
 
-        ImportModel(URL);
+        StartCoroutine(LoadModel(URL));
         selectedPart = null;
 
         // Initialize the DefaultMaterials dictionary by iterating through VisualModel children
@@ -79,11 +80,8 @@ public class UserInput : MonoBehaviour
         }
 
         Tip = GameObject.Find("Tip");
-        Tip.SetActive(false);
 
         uiScript = GameObject.Find("OverlayUI").GetComponent<UIScript>();
-
-        StartCoroutine(LoadModel("https://digitalworlds.github.io/CURE25_Test/models/AotusTaxonPage/Aotus108.json"));
     }
 
     public void Update()
@@ -91,7 +89,6 @@ public class UserInput : MonoBehaviour
         // Turn on tooltip
         if (selectedPart != null)
         {
-            Tip.SetActive(true);
             foreach (ModelPart i in ModelData.Parts)
             {
                 if(selectedPart.name.Contains(i.PartName))
@@ -99,10 +96,6 @@ public class UserInput : MonoBehaviour
                     Tip.transform.Find("BG").Find("Text").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
                 }
             }
-        }
-        else
-        {
-            Tip.SetActive(false);
         }
 
         // Check for mouse button presses and handle movement/rotation
@@ -340,7 +333,7 @@ public class UserInput : MonoBehaviour
             {
                 SetBoneAndTeeth();
             }
-
+            uiScript.enabled = true;
         }
     }
 

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 public class UIScript : MonoBehaviour
 {
-    private UserInput UserInput;
+    public UserInput UserInput;
     public Slider opacitySlider; // Slider for opacity adjustment
     private TextMeshProUGUI titleText; 
 
@@ -34,7 +34,6 @@ public class UIScript : MonoBehaviour
     {
         opacitySlider = GameObject.Find("Opacity").GetComponent<Slider>();
         
-        UserInput = GameObject.Find("Manager").GetComponent<UserInput>();
         animator = GameObject.Find("SideMenu").GetComponent<Animator>();
         titleText = GameObject.Find("Title").GetComponent<TextMeshProUGUI>();
 
@@ -75,7 +74,8 @@ public class UIScript : MonoBehaviour
 
     public void Update()
     {
-        titleText.text = UserInput.Name;
+        if(UserInput)
+            titleText.text = UserInput.Name;
         ChangeOpacity();
         UpdateScaleBar();
     }
