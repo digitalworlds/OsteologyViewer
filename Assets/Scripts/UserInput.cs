@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using GLTFast;
 using TMPro;
+using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
@@ -67,17 +68,6 @@ public class UserInput : MonoBehaviour
 
         StartCoroutine(LoadModel(URL));
         selectedPart = null;
-
-        // Initialize the DefaultMaterials dictionary by iterating through VisualModel children
-        foreach (Transform child in VisualModel.transform)
-        {
-            // Check if child has a Renderer and add its material to the dictionary
-            Renderer renderer = child.GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                DefaultMaterials[child.name] = renderer.material;
-            }
-        }
 
         Tip = GameObject.Find("Tip");
 
@@ -296,7 +286,6 @@ public class UserInput : MonoBehaviour
         }
     }
 
-
     async void ImportModel(string ModelURL)
     {
         var gltfImport = new GltfImport();
@@ -304,7 +293,7 @@ public class UserInput : MonoBehaviour
         var instantiator = new GameObjectInstantiator(gltfImport, VisualModel.transform);
         var success = await gltfImport.InstantiateMainSceneAsync(instantiator);
 
-        if (success) 
+        if (success)
         {
             //Debug.Log("GLTF file is loaded.");
 
@@ -329,11 +318,17 @@ public class UserInput : MonoBehaviour
 
             VideoPlayer.SetActive(false);
 
-            if(SceneManager.GetActiveScene().name.Contains("Taxon"))
+            if (SceneManager.GetActiveScene().name.Contains("Taxon"))
             {
                 SetBoneAndTeeth();
             }
+            else if (SceneManager.GetActiveScene().name.Contains("Tooth"))
+            {
+                SetColors();
+            }
+
             uiScript.enabled = true;
+            UpdateCurrentMaterials();
         }
     }
 
@@ -439,23 +434,25 @@ public class UserInput : MonoBehaviour
                 SideMenu.transform.Find("Details").GetComponent<TextMeshProUGUI>().text = i.PartDescription;
             }
         }
-        
     }
 
-    public void SetXray()
+    public void UpdateCurrentMaterials()
     {
-        foreach(Transform child in VisualModel.transform.GetChild(0))
+        // Initialize the DefaultMaterials dictionary by iterating through VisualModel children
+        foreach (Transform child in VisualModel.transform)
         {
-            child.GetComponent<Renderer>().enabled = true;
-            child.GetComponent<Renderer>().material = DefaultMaterialXray;
+            // Check if child has a Renderer and add its material to the dictionary
+            Renderer renderer = child.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                DefaultMaterials[child.name] = renderer.material;
+            }
         }
-        selectedPart = null;
-        uiScript.xrayOn = true;
-        uiScript.opacitySlider.wholeNumbers = false;
     }
+
     public void SetDefault()
     {
-        foreach(Transform child in VisualModel.transform.GetChild(0))
+        foreach (Transform child in VisualModel.transform.GetChild(0))
         {
             child.GetComponent<Renderer>().material = DefaultMaterial;
             DefaultMaterials[child.name] = child.GetComponent<Renderer>().material;
@@ -464,6 +461,22 @@ public class UserInput : MonoBehaviour
         selectedPart = null;
         uiScript.xrayOn = false;
         uiScript.opacitySlider.wholeNumbers = true;
+
+        UpdateCurrentMaterials();
+    }
+
+    public void SetXray()
+    {
+        foreach (Transform child in VisualModel.transform.GetChild(0))
+        {
+            child.GetComponent<Renderer>().enabled = true;
+            child.GetComponent<Renderer>().material = DefaultMaterialXray;
+        }
+        selectedPart = null;
+        uiScript.xrayOn = true;
+        uiScript.opacitySlider.wholeNumbers = false;
+
+        UpdateCurrentMaterials();
     }
 
     public void SetColors()
@@ -474,7 +487,7 @@ public class UserInput : MonoBehaviour
             {
                 string key = entry.Key;
                 string value = entry.Value;
-                
+
                 Debug.Log(key + ", " + value);
 
                 if (child.name.Contains(key))
@@ -513,8 +526,9 @@ public class UserInput : MonoBehaviour
         selectedPart = null;
         uiScript.xrayOn = false;
         uiScript.opacitySlider.wholeNumbers = true;
-    }
 
+        UpdateCurrentMaterials();
+    }
 
     public void SetBoneAndTeeth()
     {
@@ -535,7 +549,6 @@ public class UserInput : MonoBehaviour
                     {
                         child.GetComponent<Renderer>().material = Resources.Load<Material>("Materials/TeethTexture");
                     }
-
                     // Break after match to avoid unnecessary checks
                     break;
                 }
@@ -544,6 +557,8 @@ public class UserInput : MonoBehaviour
 
         selectedPart = null;
         uiScript.xrayOn = false;
+
+        UpdateCurrentMaterials();
     }
 
     public void HideMandible()

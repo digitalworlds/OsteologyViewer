@@ -76,6 +76,7 @@ public class UIScript : MonoBehaviour
     {
         if(UserInput)
             titleText.text = UserInput.Name;
+
         ChangeOpacity();
         UpdateScaleBar();
     }

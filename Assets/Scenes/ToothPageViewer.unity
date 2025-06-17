@@ -6134,11 +6134,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 053970fd2d8027d419100123b3200926, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  opacitySlider: {fileID: 0}
-  scaleBarUI: {fileID: 0}
-  scaleLabel: {fileID: 0}
+  UserInput: {fileID: 1766328557}
+  opacitySlider: {fileID: 415045305}
+  scaleBarUI: {fileID: 1711210828}
+  scaleLabel: {fileID: 1883798047}
   referenceLengthInMeters: 1
-  orthoCamera: {fileID: 0}
+  orthoCamera: {fileID: 1641407619}
   xrayOn: 0
 --- !u!210 &1711233250
 SortingGroup:
