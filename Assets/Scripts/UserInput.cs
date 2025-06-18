@@ -256,13 +256,14 @@ public class UserInput : MonoBehaviour
             ModelData = JsonUtility.FromJson<Model>(json);
 
             Name = ModelData.ModelName;
-            
+
             // foreach(ModelPart part in ModelData.Parts)
             // {
             //     Debug.Log("Part Name: " + part.PartName);
             //     Debug.Log("Diplay Name: " + part.DisplayName);
             //     Debug.Log("Part Description: " + part.PartDescription);
             // }
+            Debug.Log(ModelData.URL);
             ImportModel(ModelData.URL);
             StartCoroutine(LoadColorDictionary(ColorDictionaryURL));
         }
@@ -295,7 +296,7 @@ public class UserInput : MonoBehaviour
 
         if (success)
         {
-            //Debug.Log("GLTF file is loaded.");
+            Debug.Log("GLTF file is loaded.");
 
             VisualModel.transform.localScale /= 5;
 
@@ -625,9 +626,9 @@ public class Model
 {
     public string ModelName;
     public string Description;
+    public string ViewerType;
     public string URL;
     public ModelPart[] Parts;
-
 }
 
 [Serializable]
