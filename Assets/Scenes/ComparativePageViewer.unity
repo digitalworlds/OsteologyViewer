@@ -6134,7 +6134,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 053970fd2d8027d419100123b3200926, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  opacitySlider: {fileID: 0}
+  UserInput: {fileID: 1766328557}
+  opacitySlider: {fileID: 415045305}
+  scaleBarUI: {fileID: 1711210828}
+  scaleLabel: {fileID: 1883798047}
+  referenceLengthInMeters: 1
+  orthoCamera: {fileID: 1641407619}
   xrayOn: 0
 --- !u!210 &1711233250
 SortingGroup:
@@ -6311,10 +6316,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2ef892a23684c144857213adb2cdbdb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ColorDictionaryURL: 
   rotationSpeed: 50
   movementSpeed: 0.2
   defaultZoom: 4
   Name: Model Name
+  URL: https://digitalworlds.github.io/SkeletalGrowthDB/Models/AotusModels/Aotus107_Colors.json
   SelectedMaterial: {fileID: 2100000, guid: dbd69698abfa84e4aa2d43e5749e1d88, type: 2}
   DefaultMaterialXray: {fileID: 2100000, guid: cf5330a970f0f884092306d59cbab3a2, type: 2}
   SelectedMaterialXray: {fileID: 2100000, guid: fdf5397205cf3c24996576b830760096,

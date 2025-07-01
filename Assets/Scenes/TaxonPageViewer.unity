@@ -6859,7 +6859,7 @@ MonoBehaviour:
   movementSpeed: 0.2
   defaultZoom: 4
   Name: Model Name
-  URL: https://digitalworlds.github.io/SkeletalGrowthDB/Models/Aotus108Taxon/Aotus108Taxon.json
+  URL: https://digitalworlds.github.io/SkeletalGrowthDB/Models/AotusModels/Aotus107_Taxon_v2.json
   SelectedMaterial: {fileID: 2100000, guid: dbd69698abfa84e4aa2d43e5749e1d88, type: 2}
   DefaultMaterialXray: {fileID: 2100000, guid: cf5330a970f0f884092306d59cbab3a2, type: 2}
   SelectedMaterialXray: {fileID: 2100000, guid: fdf5397205cf3c24996576b830760096,
