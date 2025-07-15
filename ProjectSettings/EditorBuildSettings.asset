@@ -11,7 +11,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/TaxonPageViewer.unity
     guid: 7797b2fc0f949b64eb855c8f9805322e
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/ToothPageViewer.unity
     guid: 880288e295a6a5741ab3a95ded2f7f3d
   m_configObjects: {}

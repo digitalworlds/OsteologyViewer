@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using GLTFast;
 using TMPro;
+using Unity.Mathematics;
 using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -256,6 +257,8 @@ public class UserInput : MonoBehaviour
             ModelData = JsonUtility.FromJson<Model>(json);
 
             Name = ModelData.ModelName;
+            Debug.Log(ModelData.Orientation);
+            ModelData.OrientationVector = new Vector3(ModelData.Orientation[0], ModelData.Orientation[1], ModelData.Orientation[2]);
 
             // foreach(ModelPart part in ModelData.Parts)
             // {
@@ -317,7 +320,7 @@ public class UserInput : MonoBehaviour
                 }
             }
 
-            VideoPlayer.SetActive(false);
+            VisualModel.transform.rotation = new quaternion(ModelData.OrientationVector[0], ModelData.OrientationVector[1], ModelData.OrientationVector[2], 0);
 
             if (SceneManager.GetActiveScene().name.Contains("Taxon"))
             {
@@ -328,6 +331,7 @@ public class UserInput : MonoBehaviour
                 SetColors();
             }
 
+            VideoPlayer.SetActive(false);
             uiScript.enabled = true;
             UpdateCurrentMaterials();
         }
@@ -629,6 +633,8 @@ public class Model
     public string ViewerType;
     public string URL;
     public ModelPart[] Parts;
+    public Vector3 OrientationVector;
+    public int[] Orientation;
 }
 
 [Serializable]
