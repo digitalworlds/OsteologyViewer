@@ -267,7 +267,7 @@ public class UserInput : MonoBehaviour
             //     Debug.Log("Diplay Name: " + part.DisplayName);
             //     Debug.Log("Part Description: " + part.PartDescription);
             // }
-            Debug.Log(ModelData.URL);
+            //Debug.Log(ModelData.URL);
             ImportModel(ModelData.URL);
             StartCoroutine(LoadColorDictionary(ColorDictionaryURL));
         }
@@ -286,7 +286,7 @@ public class UserInput : MonoBehaviour
             foreach (var kv in wrapper.ColorDictionary)
             {
                 colorDictionary[kv.key] = kv.value;
-                Debug.Log(kv.key + ", " + kv.value);
+                //Debug.Log(kv.key + ", " + kv.value);
             }
         }
     }
@@ -321,8 +321,6 @@ public class UserInput : MonoBehaviour
                 }
             }
 
-            VisualModel.transform.rotation = new quaternion(ModelData.OrientationVector[0], ModelData.OrientationVector[1], ModelData.OrientationVector[2], 0);
-
             // Calculate combined bounds
             Bounds combinedBounds = new Bounds(VisualModel.transform.position, Vector3.zero);
             Renderer[] renderers = VisualModel.GetComponentsInChildren<Renderer>();
@@ -347,6 +345,9 @@ public class UserInput : MonoBehaviour
             //uiScript.referenceLengthInMeters /= scaleFactor;
 
             Debug.Log($"Scaled model by {scaleFactor} to fit within {targetSize} unit bounding box.");
+
+            Debug.Log(ModelData.OrientationVector[0] + " " + ModelData.OrientationVector[1] + " " + ModelData.OrientationVector[2]);
+            VisualModel.transform.localEulerAngles = new Vector3(ModelData.OrientationVector[0], ModelData.OrientationVector[1], ModelData.OrientationVector[2]);
 
             if (SceneManager.GetActiveScene().name.Contains("Taxon"))
             {
