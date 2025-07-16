@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using GLTFast;
 using TMPro;
 using Unity.Mathematics;
-using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
@@ -20,6 +19,8 @@ public class UserInput : MonoBehaviour
 
     public string Name;
     public string URL;
+    public float targetSize = 6.0f;
+
 
     // Dictionary to store materials for each part of the VisualModel
     public Dictionary<string, Material> DefaultMaterials = new Dictionary<string, Material>();
@@ -321,6 +322,31 @@ public class UserInput : MonoBehaviour
             }
 
             VisualModel.transform.rotation = new quaternion(ModelData.OrientationVector[0], ModelData.OrientationVector[1], ModelData.OrientationVector[2], 0);
+
+            // Calculate combined bounds
+            Bounds combinedBounds = new Bounds(VisualModel.transform.position, Vector3.zero);
+            Renderer[] renderers = VisualModel.GetComponentsInChildren<Renderer>();
+
+            if (renderers.Length > 0)
+            {
+                combinedBounds = renderers[0].bounds;
+                foreach (Renderer renderer in renderers)
+                {
+                    combinedBounds.Encapsulate(renderer.bounds);
+                }
+            }
+
+            // Find the largest dimension
+            float largestDimension = Mathf.Max(combinedBounds.size.x, Mathf.Max(combinedBounds.size.y, combinedBounds.size.z));
+
+            // Calculate scale factor
+            float scaleFactor = targetSize / largestDimension;
+
+            // Apply scale to root transform
+            VisualModel.transform.localScale *= scaleFactor;
+            //uiScript.referenceLengthInMeters /= scaleFactor;
+
+            Debug.Log($"Scaled model by {scaleFactor} to fit within {targetSize} unit bounding box.");
 
             if (SceneManager.GetActiveScene().name.Contains("Taxon"))
             {
