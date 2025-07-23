@@ -1,13 +1,15 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using GLTFast;
 using TMPro;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
-public class UserInput : MonoBehaviour
-{
+public class UserInput_Dual : MonoBehaviour
+{   
     public string ColorDictionaryURL;
     private Dictionary<string, string> colorDictionary = new Dictionary<string, string>();
 
@@ -16,9 +18,9 @@ public class UserInput : MonoBehaviour
     public float defaultZoom;
 
     public string Name;
-    public string URL;
+    public string Model1URL;
+    public string Model2URL;
     public float targetSize = 6.0f;
-
 
     // Dictionary to store materials for each part of the VisualModel
     public Dictionary<string, Material> DefaultMaterials = new Dictionary<string, Material>();
@@ -31,9 +33,12 @@ public class UserInput : MonoBehaviour
     private bool isRightClickPressed = false;
     private bool isMiddleClickPressed = false;
 
-    private GameObject VisualModel;
-    private GameObject Camera;
-    private Camera CameraComponent;
+    private GameObject VisualModel1;
+    private GameObject VisualModel2;
+    private GameObject Camera1;
+    private GameObject Camera2;
+    private Camera CameraComponent1;
+    private Camera CameraComponent2;
     private float Zoom;
 
     private GameObject selectedPart;
@@ -42,16 +47,17 @@ public class UserInput : MonoBehaviour
     // List of saved views (each saved view stores position, rotation, and orthographic size)
     private List<SavedView> SavedViews = new List<SavedView>();
 
-    private UIScript uiScript;
+    private UIScript_Dual uiScript;
     private TextMeshProUGUI scaleValue;
 
     private Model ModelData;
 
     public GameObject VideoPlayer;
 
-    public void LoadFromHTML(string url)
+    public void LoadFromHTML(string url1, string url2)
     {
-        StartCoroutine(LoadModel(url));
+        StartCoroutine(LoadModel(url1, VisualModel1));
+        StartCoroutine(LoadModel(url2, VisualModel1));
         Name = "Loading...";
     }
 
@@ -60,18 +66,24 @@ public class UserInput : MonoBehaviour
         Name = "Loading...";
         Zoom = defaultZoom;
 
-        VisualModel = GameObject.Find("Model");
-        Camera = GameObject.Find("Main Camera");
-        CameraComponent = Camera.GetComponent<Camera>(); // Get the Camera component
+        VisualModel1 = GameObject.Find("Model1");
+        VisualModel2 = GameObject.Find("Model2");
+
+        Camera1 = GameObject.Find("Cam1");
+        CameraComponent1 = Camera1.GetComponent<Camera>(); // Get the Camera component
+
+        Camera2 = GameObject.Find("Cam2");
+        CameraComponent2 = Camera2.GetComponent<Camera>(); // Get the Camera component
 
         scaleValue = GameObject.Find("ScaleValue").GetComponent<TextMeshProUGUI>();
 
-        StartCoroutine(LoadModel(URL));
+        StartCoroutine(LoadModel(Model1URL, VisualModel1));
+        StartCoroutine(LoadModel(Model2URL, VisualModel2));
         selectedPart = null;
 
         Tip = GameObject.Find("Tip");
 
-        uiScript = GameObject.Find("OverlayUI").GetComponent<UIScript>();
+        uiScript = GameObject.Find("OverlayUI").GetComponent<UIScript_Dual>();
     }
 
     public void Update()
@@ -81,7 +93,7 @@ public class UserInput : MonoBehaviour
         {
             foreach (ModelPart i in ModelData.Parts)
             {
-                if (selectedPart.name.Contains(i.PartName))
+                if(selectedPart.name.Contains(i.PartName))
                 {
                     Tip.transform.Find("BG").Find("Text").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
                 }
@@ -148,7 +160,8 @@ public class UserInput : MonoBehaviour
     {
         Zoom--;
         Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Clamp Zoom within range
-        CameraComponent.orthographicSize = Zoom;
+        CameraComponent1.orthographicSize = Zoom;
+        CameraComponent2.orthographicSize = Zoom;
         scaleValue.text = Zoom.ToString() + "mm";
     }
 
@@ -156,7 +169,8 @@ public class UserInput : MonoBehaviour
     {
         Zoom++;
         Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Clamp Zoom within range
-        CameraComponent.orthographicSize = Zoom;
+        CameraComponent1.orthographicSize = Zoom;
+        CameraComponent2.orthographicSize = Zoom;
         scaleValue.text = Zoom.ToString() + "mm";
     }
 
@@ -170,8 +184,11 @@ public class UserInput : MonoBehaviour
         float rotY = mouseDelta.y * rotationSpeed * Time.deltaTime;
 
         // Rotate the VisualModel around the X and Y axes
-        VisualModel.transform.Rotate(Vector3.up, -rotX, Space.World); // Rotate around Y axis (horizontal mouse movement)
-        VisualModel.transform.Rotate(Vector3.right, rotY, Space.World); // Rotate around X axis (vertical mouse movement)
+        VisualModel1.transform.Rotate(Vector3.up, -rotX, Space.World); // Rotate around Y axis (horizontal mouse movement)
+        VisualModel1.transform.Rotate(Vector3.right, rotY, Space.World); // Rotate around X axis (vertical mouse movement)
+
+        VisualModel2.transform.Rotate(Vector3.up, -rotX, Space.World); // Rotate around Y axis (horizontal mouse movement)
+        VisualModel2.transform.Rotate(Vector3.right, rotY, Space.World); // Rotate around X axis (vertical mouse movement)
 
         // Update last mouse position for the next frame
         lastMousePosition = Input.mousePosition;
@@ -186,7 +203,8 @@ public class UserInput : MonoBehaviour
         Vector3 movement = new Vector3(mouseDelta.x, mouseDelta.y, 0) * (movementSpeed * Zoom) * Time.deltaTime;
 
         // Move the VisualModel (here the movement is applied in local space)
-        VisualModel.transform.Translate(movement, Space.World);
+        VisualModel1.transform.Translate(movement, Space.World);
+        VisualModel2.transform.Translate(movement, Space.World);
 
         // Update last mouse position for next frame
         lastMousePosition = Input.mousePosition;
@@ -196,13 +214,20 @@ public class UserInput : MonoBehaviour
     {
         // Reset the camera's orthographic size to the default zoom
         Zoom = defaultZoom;
-        CameraComponent.orthographicSize = Zoom;
+        CameraComponent1.orthographicSize = Zoom;
+        CameraComponent2.orthographicSize = Zoom;
 
         // Reset the VisualModel's position to the origin (0, 0, 0)
-        VisualModel.transform.position = Vector3.zero;
+        VisualModel1.transform.position = Vector3.zero;
 
         // Reset the VisualModel's rotation to the default rotation (no rotation)
-        VisualModel.transform.rotation = Quaternion.identity;
+        VisualModel1.transform.rotation = Quaternion.identity;
+
+        // Reset the VisualModel's position to the origin (0, 0, 0)
+        VisualModel2.transform.position = Vector3.zero;
+
+        // Reset the VisualModel's rotation to the default rotation (no rotation)
+        VisualModel2.transform.rotation = Quaternion.identity;
     }
 
     public GameObject GetCurrentPart()
@@ -214,7 +239,8 @@ public class UserInput : MonoBehaviour
     public void SaveView()
     {
         // Save the current position, rotation, and camera's orthographic size
-        SavedView view = new SavedView(VisualModel.transform.position, VisualModel.transform.rotation, CameraComponent.orthographicSize);
+        SavedView view = new SavedView(VisualModel1.transform.position, VisualModel1.transform.rotation, CameraComponent1.orthographicSize);
+        
 
         // Add the view to the list of saved views
         SavedViews.Add(view);
@@ -225,7 +251,7 @@ public class UserInput : MonoBehaviour
     {
         // Create a new SavedView instance with the provided parameters
         SavedView view = new SavedView(position, rotation, orthographicSize);
-
+        
         // Add this custom view to the saved views list
         SavedViews.Add(view);
     }
@@ -239,17 +265,22 @@ public class UserInput : MonoBehaviour
             SavedView savedView = SavedViews[index];
 
             // Apply the saved position, rotation, and orthographic size
-            VisualModel.transform.position = savedView.Position;
-            VisualModel.transform.rotation = savedView.Rotation;
-            CameraComponent.orthographicSize = savedView.OrthographicSize;
+            VisualModel1.transform.position = savedView.Position;
+            VisualModel1.transform.rotation = savedView.Rotation;
+
+            VisualModel2.transform.position = savedView.Position;
+            VisualModel2.transform.rotation = savedView.Rotation;
+
+            CameraComponent1.orthographicSize = savedView.OrthographicSize;
+            CameraComponent2.orthographicSize = savedView.OrthographicSize;
         }
     }
-    public IEnumerator LoadModel(string JsonURL)
+    public IEnumerator LoadModel(string JsonURL, GameObject visual)
     {
         // First, load the JSON metadata
         UnityWebRequest jsonRequest = UnityWebRequest.Get(JsonURL);
-        yield return jsonRequest.SendWebRequest();
-
+        yield return  jsonRequest.SendWebRequest();
+        
         if (jsonRequest.result == UnityWebRequest.Result.Success)
         {
             string json = jsonRequest.downloadHandler.text;
@@ -266,7 +297,7 @@ public class UserInput : MonoBehaviour
             //     Debug.Log("Part Description: " + part.PartDescription);
             // }
             //Debug.Log(ModelData.URL);
-            ImportModel(ModelData.URL);
+            ImportModel(ModelData.URL, visual);
             StartCoroutine(LoadColorDictionary(ColorDictionaryURL));
         }
     }
@@ -289,20 +320,20 @@ public class UserInput : MonoBehaviour
         }
     }
 
-    async void ImportModel(string ModelURL)
+    async void ImportModel(string ModelURL, GameObject visual)
     {
         var gltfImport = new GltfImport();
         await gltfImport.Load(ModelURL);
-        var instantiator = new GameObjectInstantiator(gltfImport, VisualModel.transform);
+        var instantiator = new GameObjectInstantiator(gltfImport, visual.transform);
         var success = await gltfImport.InstantiateMainSceneAsync(instantiator);
 
         if (success)
         {
             Debug.Log("GLTF file is loaded.");
 
-            VisualModel.transform.localScale /= 5;
+            visual.transform.localScale /= 5;
 
-            foreach (Transform child in VisualModel.transform.GetChild(0))
+            foreach (Transform child in visual.transform.GetChild(0))
             {
                 // Add a MeshCollider to the child if it has a MeshFilter (which indicates it has a mesh)
                 MeshFilter meshFilter = child.GetComponent<MeshFilter>();
@@ -315,13 +346,21 @@ public class UserInput : MonoBehaviour
                         child.gameObject.AddComponent<MeshCollider>();
                         DefaultMaterials.Add(child.name, child.gameObject.GetComponent<Renderer>().material);
                         DefaultMaterial = child.GetComponent<Renderer>().material;
+                        if (visual == VisualModel1)
+                        {
+                            child.gameObject.layer = LayerMask.NameToLayer("Model1");
+                        }
+                        else
+                        {
+                            child.gameObject.layer = LayerMask.NameToLayer("Model2");
+                        }
                     }
                 }
             }
 
             // Calculate combined bounds
-            Bounds combinedBounds = new Bounds(VisualModel.transform.position, Vector3.zero);
-            Renderer[] renderers = VisualModel.GetComponentsInChildren<Renderer>();
+            Bounds combinedBounds = new Bounds(visual.transform.position, Vector3.zero);
+            Renderer[] renderers = visual.GetComponentsInChildren<Renderer>();
 
             if (renderers.Length > 0)
             {
@@ -339,13 +378,13 @@ public class UserInput : MonoBehaviour
             float scaleFactor = targetSize / largestDimension;
 
             // Apply scale to root transform
-            VisualModel.transform.localScale *= scaleFactor;
+            visual.transform.localScale *= scaleFactor;
             //uiScript.referenceLengthInMeters /= scaleFactor;
 
             Debug.Log($"Scaled model by {scaleFactor} to fit within {targetSize} unit bounding box.");
 
             Debug.Log(ModelData.OrientationVector[0] + " " + ModelData.OrientationVector[1] + " " + ModelData.OrientationVector[2]);
-            VisualModel.transform.localEulerAngles = new Vector3(ModelData.OrientationVector[0], ModelData.OrientationVector[1], ModelData.OrientationVector[2]);
+            visual.transform.localEulerAngles = new Vector3(ModelData.OrientationVector[0], ModelData.OrientationVector[1], ModelData.OrientationVector[2]);
 
             if (SceneManager.GetActiveScene().name.Contains("Taxon"))
             {
@@ -368,7 +407,7 @@ public class UserInput : MonoBehaviour
         Vector3 mousePosition = Input.mousePosition;
 
         // Step 2: Convert mouse position to a ray from the camera to the world space
-        Ray ray = Camera.GetComponent<Camera>().ScreenPointToRay(mousePosition);
+        Ray ray = Camera1.GetComponent<Camera>().ScreenPointToRay(mousePosition);
 
         // Step 3: Perform the raycast
         RaycastHit hit;
@@ -458,7 +497,7 @@ public class UserInput : MonoBehaviour
         GameObject SideMenu = GameObject.Find("SideMenu");
         foreach (ModelPart i in ModelData.Parts)
         {
-            if (selectedPart.name.Contains(i.PartName))
+            if(selectedPart.name.Contains(i.PartName))
             {
                 SideMenu.transform.Find("Part").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
                 SideMenu.transform.Find("Details").GetComponent<TextMeshProUGUI>().text = i.PartDescription;
@@ -469,7 +508,18 @@ public class UserInput : MonoBehaviour
     public void UpdateCurrentMaterials()
     {
         // Initialize the DefaultMaterials dictionary by iterating through VisualModel children
-        foreach (Transform child in VisualModel.transform)
+        foreach (Transform child in VisualModel1.transform)
+        {
+            // Check if child has a Renderer and add its material to the dictionary
+            Renderer renderer = child.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                DefaultMaterials[child.name] = renderer.material;
+            }
+        }
+
+        // Initialize the DefaultMaterials dictionary by iterating through VisualModel children
+        foreach (Transform child in VisualModel2.transform)
         {
             // Check if child has a Renderer and add its material to the dictionary
             Renderer renderer = child.GetComponent<Renderer>();
@@ -482,7 +532,13 @@ public class UserInput : MonoBehaviour
 
     public void SetDefault()
     {
-        foreach (Transform child in VisualModel.transform.GetChild(0))
+        foreach (Transform child in VisualModel1.transform.GetChild(0))
+        {
+            child.GetComponent<Renderer>().material = DefaultMaterial;
+            DefaultMaterials[child.name] = child.GetComponent<Renderer>().material;
+        }
+
+        foreach (Transform child in VisualModel2.transform.GetChild(0))
         {
             child.GetComponent<Renderer>().material = DefaultMaterial;
             DefaultMaterials[child.name] = child.GetComponent<Renderer>().material;
@@ -497,7 +553,13 @@ public class UserInput : MonoBehaviour
 
     public void SetXray()
     {
-        foreach (Transform child in VisualModel.transform.GetChild(0))
+        foreach (Transform child in VisualModel1.transform.GetChild(0))
+        {
+            child.GetComponent<Renderer>().enabled = true;
+            child.GetComponent<Renderer>().material = DefaultMaterialXray;
+        }
+
+        foreach (Transform child in VisualModel2.transform.GetChild(0))
         {
             child.GetComponent<Renderer>().enabled = true;
             child.GetComponent<Renderer>().material = DefaultMaterialXray;
@@ -511,7 +573,49 @@ public class UserInput : MonoBehaviour
 
     public void SetColors()
     {
-        foreach (Transform child in VisualModel.transform.GetChild(0))
+        foreach (Transform child in VisualModel1.transform.GetChild(0))
+        {
+            foreach (var entry in colorDictionary)
+            {
+                string key = entry.Key;
+                string value = entry.Value;
+
+                Debug.Log(key + ", " + value);
+
+                if (child.name.Contains(key))
+                {
+                    child.GetComponent<Renderer>().enabled = true;
+
+                    Material material;
+
+                    if (ColorUtility.TryParseHtmlString(value, out Color color))
+                    {
+                        material = new Material(DefaultMaterial);
+                        material.color = color;
+                    }
+                    else if (value == "Bone")
+                    {
+                        material = Resources.Load<Material>("Materials/BoneTexture");
+                    }
+                    else if (value == "Teeth")
+                    {
+                        material = Resources.Load<Material>("Materials/TeethTexture");
+                    }
+                    else
+                    {
+                        // Fallback to default material if value isn't a color or known type
+                        material = new Material(DefaultMaterial);
+                    }
+
+                    child.GetComponent<Renderer>().material = material;
+                    DefaultMaterials[child.name] = material;
+
+                    break; // Stop checking once we've found a match
+                }
+            }
+        }
+
+        foreach (Transform child in VisualModel2.transform.GetChild(0))
         {
             foreach (var entry in colorDictionary)
             {
@@ -562,7 +666,29 @@ public class UserInput : MonoBehaviour
 
     public void SetBoneAndTeeth()
     {
-        foreach (Transform child in VisualModel.transform.GetChild(0))
+        foreach (Transform child in VisualModel1.transform.GetChild(0))
+        {
+            foreach (var entry in colorDictionary)
+            {
+                string key = entry.Key;
+                string value = entry.Value;
+
+                if (child.name.Contains(key))
+                {
+                    if (value == "Bone")
+                    {
+                        child.GetComponent<Renderer>().material = Resources.Load<Material>("Materials/BoneTexture");
+                    }
+                    else if (value == "Teeth")
+                    {
+                        child.GetComponent<Renderer>().material = Resources.Load<Material>("Materials/TeethTexture");
+                    }
+                    // Break after match to avoid unnecessary checks
+                    break;
+                }
+            }
+        }
+        foreach (Transform child in VisualModel2.transform.GetChild(0))
         {
             foreach (var entry in colorDictionary)
             {
@@ -593,7 +719,7 @@ public class UserInput : MonoBehaviour
 
     public void HideMandible()
     {
-        foreach (Transform child in VisualModel.transform.GetChild(0))
+        foreach (Transform child in VisualModel1.transform.GetChild(0))
         {
             foreach (ModelPart i in ModelData.Parts)
             {
@@ -610,16 +736,52 @@ public class UserInput : MonoBehaviour
                 }
             }
         }
+        
+        foreach(Transform child in VisualModel2.transform.GetChild(0))
+        {
+            foreach (ModelPart i in ModelData.Parts)
+            {
+                if(child.name.Contains(i.PartName) && i.PartName.Contains("Mandible"))
+                {
+                    if(child.gameObject.activeSelf)
+                    {
+                        child.gameObject.SetActive(false);
+                    }
+                    else
+                    {
+                        child.gameObject.SetActive(true);
+                    }
+                }
+            }
+        }
     }
     public void HideCranialVault()
     {
-        foreach (Transform child in VisualModel.transform.GetChild(0))
+        foreach (Transform child in VisualModel1.transform.GetChild(0))
         {
             foreach (ModelPart i in ModelData.Parts)
             {
                 if (child.name.Contains(i.PartName) && child.name.Contains("Calotte"))
                 {
                     if (child.gameObject.activeSelf)
+                    {
+                        child.gameObject.SetActive(false);
+                    }
+                    else
+                    {
+                        child.gameObject.SetActive(true);
+                    }
+                }
+            }
+        }
+        
+        foreach(Transform child in VisualModel2.transform.GetChild(0))
+        {
+            foreach (ModelPart i in ModelData.Parts)
+            {
+                if(child.name.Contains(i.PartName) && child.name.Contains("Calotte"))
+                {
+                    if(child.gameObject.activeSelf)
                     {
                         child.gameObject.SetActive(false);
                     }
