@@ -18,6 +18,7 @@ public class UserInput : MonoBehaviour
     public string Name;
     public string URL;
     public float targetSize = 6.0f;
+    public float scaleFactor = 0;
 
 
     // Dictionary to store materials for each part of the VisualModel
@@ -66,7 +67,7 @@ public class UserInput : MonoBehaviour
 
         scaleValue = GameObject.Find("ScaleValue").GetComponent<TextMeshProUGUI>();
 
-        //StartCoroutine(LoadModel(URL));
+        StartCoroutine(LoadModel(URL));
         selectedPart = null;
 
         Tip = GameObject.Find("Tip");
@@ -149,7 +150,8 @@ public class UserInput : MonoBehaviour
         Zoom--;
         Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Clamp Zoom within range
         CameraComponent.orthographicSize = Zoom;
-        scaleValue.text = Zoom.ToString() + "mm";
+        float value = Mathf.Round(Zoom * scaleFactor * 10.0f) * 0.1f;
+        scaleValue.text = value.ToString()  + "mm";
     }
 
     public void ZoomOut()
@@ -157,7 +159,8 @@ public class UserInput : MonoBehaviour
         Zoom++;
         Zoom = Mathf.Clamp(Zoom, 0.5f, 10f); // Clamp Zoom within range
         CameraComponent.orthographicSize = Zoom;
-        scaleValue.text = Zoom.ToString() + "mm";
+        float value = Mathf.Round(Zoom * scaleFactor * 10.0f) * 0.1f;
+        scaleValue.text = value.ToString()  + "mm";
     }
 
     void RotateModel()
@@ -336,7 +339,7 @@ public class UserInput : MonoBehaviour
             float largestDimension = Mathf.Max(combinedBounds.size.x, Mathf.Max(combinedBounds.size.y, combinedBounds.size.z));
 
             // Calculate scale factor
-            float scaleFactor = targetSize / largestDimension;
+            scaleFactor = targetSize / largestDimension;
 
             // Apply scale to root transform
             VisualModel.transform.localScale *= scaleFactor;
@@ -355,6 +358,9 @@ public class UserInput : MonoBehaviour
             {
                 SetColors();
             }
+
+            float value = Mathf.Round(Zoom * scaleFactor * 10.0f) * 0.1f;
+            scaleValue.text = value.ToString()  + "mm";
 
             VideoPlayer.SetActive(false);
             uiScript.enabled = true;

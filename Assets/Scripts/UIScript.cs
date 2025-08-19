@@ -176,7 +176,7 @@ public class UIScript : MonoBehaviour
         GameObject currentPart = UserInput.GetCurrentPart();
         if (currentPart == null) return;
 
-        float modelScale = currentPart.transform.localScale.x; // Assume uniform scale
+        float modelScale = currentPart.transform.localScale.x * UserInput.scaleFactor; // Assume uniform scale
         float effectiveLength = referenceLengthInMeters * modelScale;
 
         // World units per pixel = (orthographic size * 2) / screen height
