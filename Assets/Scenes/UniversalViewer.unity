@@ -460,7 +460,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -1236, y: -106.872925}
+  m_AnchoredPosition: {x: -1236, y: -106.87305}
   m_SizeDelta: {x: -1420, y: -470}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &183789697
@@ -6605,7 +6605,7 @@ MonoBehaviour:
   movementSpeed: 0.2
   defaultZoom: 4
   Name: Model Name
-  URL: https://digitalworlds.github.io/SkeletalGrowthDB/Models/Cebuella/USMN-337324_Taxon.json
+  URL: https://digitalworlds.github.io/SkeletalGrowthDB/Models/AotusModels/Aotus107_Colors.json
   targetSize: 6
   scaleFactor: 0
   SelectedMaterial: {fileID: 2100000, guid: dbd69698abfa84e4aa2d43e5749e1d88, type: 2}

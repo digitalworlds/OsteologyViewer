@@ -288,7 +288,12 @@ public class UserInput_Dual : MonoBehaviour
 
             Name = ModelData.ModelName;
             Debug.Log(ModelData.Orientation);
-            ModelData.OrientationVector = new Vector3(ModelData.Orientation[0], ModelData.Orientation[1], ModelData.Orientation[2]);
+
+            ModelData.OrientationVector = new Vector3(
+                ModelData.Orientation[0],
+                ModelData.Orientation[1],
+                ModelData.Orientation[2]
+            );
 
             // foreach(ModelPart part in ModelData.Parts)
             // {
@@ -297,7 +302,8 @@ public class UserInput_Dual : MonoBehaviour
             //     Debug.Log("Part Description: " + part.PartDescription);
             // }
             //Debug.Log(ModelData.URL);
-            ImportModel(ModelData.URL, visual);
+            string url = JsonURL.Substring(0,JsonURL.LastIndexOf("/")+1)+ModelData.URL;
+            ImportModel(url, visual);
             StartCoroutine(LoadColorDictionary(ColorDictionaryURL));
         }
     }
