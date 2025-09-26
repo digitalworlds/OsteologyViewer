@@ -260,7 +260,12 @@ public class UserInput : MonoBehaviour
 
             Name = ModelData.ModelName;
             Debug.Log(ModelData.Orientation);
-            ModelData.OrientationVector = new Vector3(ModelData.Orientation[0], ModelData.Orientation[1], ModelData.Orientation[2]);
+
+            ModelData.OrientationVector = new Vector3(
+                ModelData.Orientation[0],
+                ModelData.Orientation[1],
+                ModelData.Orientation[2]
+            );
 
             // foreach(ModelPart part in ModelData.Parts)
             // {
@@ -269,6 +274,8 @@ public class UserInput : MonoBehaviour
             //     Debug.Log("Part Description: " + part.PartDescription);
             // }
             //Debug.Log(ModelData.URL);
+
+            string url = JsonURL.Substring(0, JsonURL.LastIndexOf("/") + 1) + ModelData.URL;
             ImportModel(ModelData.URL);
             StartCoroutine(LoadColorDictionary(ColorDictionaryURL));
         }
