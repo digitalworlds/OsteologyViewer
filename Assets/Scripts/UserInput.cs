@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using GLTFast;
+using JetBrains.Annotations;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -20,13 +21,13 @@ public class UserInput : MonoBehaviour
     public float targetSize = 6.0f;
     public float scaleFactor = 0;
 
+    private bool colorsOn = false;
+
 
     // Dictionary to store materials for each part of the VisualModel
     public Dictionary<string, Material> DefaultMaterials = new Dictionary<string, Material>();
     public Material SelectedMaterial;
     private Material DefaultMaterial;
-    public Material DefaultMaterialXray;
-    public Material SelectedMaterialXray;
 
     private Vector3 lastMousePosition;
     private bool isRightClickPressed = false;
@@ -39,9 +40,6 @@ public class UserInput : MonoBehaviour
 
     private GameObject selectedPart;
     private GameObject Tip;
-
-    // List of saved views (each saved view stores position, rotation, and orthographic size)
-    private List<SavedView> SavedViews = new List<SavedView>();
 
     private UIScript uiScript;
     private TextMeshProUGUI scaleValue;
@@ -213,40 +211,6 @@ public class UserInput : MonoBehaviour
         return selectedPart;
     }
 
-    // Method to save the current view (position, rotation, and orthographic size)
-    public void SaveView()
-    {
-        // Save the current position, rotation, and camera's orthographic size
-        SavedView view = new SavedView(VisualModel.transform.position, VisualModel.transform.rotation, CameraComponent.orthographicSize);
-
-        // Add the view to the list of saved views
-        SavedViews.Add(view);
-    }
-
-    // Method to create and save a custom view (position, rotation, and orthographic size)
-    public void CreateView(Vector3 position, Quaternion rotation, float orthographicSize)
-    {
-        // Create a new SavedView instance with the provided parameters
-        SavedView view = new SavedView(position, rotation, orthographicSize);
-
-        // Add this custom view to the saved views list
-        SavedViews.Add(view);
-    }
-
-    // Method to apply a saved view (position, rotation, and orthographic size)
-    public void OpenSavedView(int index)
-    {
-        index--;
-        if (index >= 0 && index < SavedViews.Count)
-        {
-            SavedView savedView = SavedViews[index];
-
-            // Apply the saved position, rotation, and orthographic size
-            VisualModel.transform.position = savedView.Position;
-            VisualModel.transform.rotation = savedView.Rotation;
-            CameraComponent.orthographicSize = savedView.OrthographicSize;
-        }
-    }
     public IEnumerator LoadModel(string JsonURL)
     {
         // First, load the JSON metadata
@@ -392,34 +356,14 @@ public class UserInput : MonoBehaviour
 
             if (selectedPart != null && selectedPart == hitObject)
             {
-                if (uiScript.xrayOn)
+                // Deselect the part if it's already selected
+                if (selectedPart.GetComponent<Renderer>().material == SelectedMaterial)
                 {
-                    // Deselect the part if it's already selected
-                    if (selectedPart.GetComponent<Renderer>().material == SelectedMaterialXray)
-                    {
-                        // Use DefaultMaterials dictionary to revert the material
-                        Color withOpacity = DefaultMaterialXray.color;
-                        withOpacity.a = SelectedMaterialXray.color.a;
-
-                        selectedPart.GetComponent<Renderer>().material = DefaultMaterialXray;
-                        selectedPart.GetComponent<Renderer>().material.color = withOpacity;
-
-                        selectedPart = null;
-                        // Reset the slider when nothing is selected
-                        uiScript.opacitySlider.value = 1f; // Reset slider to default value (fully opaque)
-                    }
-                }
-                else
-                {
-                    // Deselect the part if it's already selected
-                    if (selectedPart.GetComponent<Renderer>().material == SelectedMaterial)
-                    {
-                        // Use DefaultMaterials dictionary to revert the material
-                        selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
-                        selectedPart = null;
-                        // Reset the slider when nothing is selected
-                        uiScript.opacitySlider.value = 1f; // Reset slider to default value (fully opaque)
-                    }
+                    // Use DefaultMaterials dictionary to revert the material
+                    selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
+                    selectedPart = null;
+                    // Reset the slider when nothing is selected
+                    uiScript.opacitySlider.value = 1f; // Reset slider to default value (fully opaque)
                 }
             }
             else
@@ -427,27 +371,11 @@ public class UserInput : MonoBehaviour
                 // Deselect the previous part if there's one selected
                 if (selectedPart != null)
                 {
-                    if (uiScript.xrayOn)
-                    {
-                        selectedPart.GetComponent<Renderer>().material = DefaultMaterialXray;
-                    }
-                    else
-                    {
-                        selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
-                    }
+                    selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
                 }
 
                 selectedPart = hitObject;
-
-                // Set the selected part's material to the selected one
-                if (uiScript.xrayOn)
-                {
-                    selectedPart.GetComponent<Renderer>().material = SelectedMaterialXray;
-                }
-                else
-                {
-                    selectedPart.GetComponent<Renderer>().material = SelectedMaterial;
-                }
+                selectedPart.GetComponent<Renderer>().material = SelectedMaterial;
 
                 // Update the slider value based on the opacity dictionary (if exists)
                 if (uiScript.Opacities.ContainsKey(selectedPart))
@@ -493,8 +421,23 @@ public class UserInput : MonoBehaviour
         }
     }
 
-    public void SetDefault()
+    public void SetVisuals(GameObject text)
     {
+        if (colorsOn)
+        {
+            SetDefault();
+            text.GetComponent<TextMeshProUGUI>().text = "C";
+        }
+        else
+        {
+            SetColors();
+            text.GetComponent<TextMeshProUGUI>().text = "D";
+        }
+    }
+
+    private void SetDefault()
+    {
+        colorsOn = false;
         foreach (Transform child in VisualModel.transform.GetChild(0))
         {
             child.GetComponent<Renderer>().material = DefaultMaterial;
@@ -502,28 +445,14 @@ public class UserInput : MonoBehaviour
         }
 
         selectedPart = null;
-        uiScript.xrayOn = false;
         uiScript.opacitySlider.wholeNumbers = true;
 
         UpdateCurrentMaterials();
     }
 
-    public void SetXray()
+    private void SetColors()
     {
-        foreach (Transform child in VisualModel.transform.GetChild(0))
-        {
-            child.GetComponent<Renderer>().enabled = true;
-            child.GetComponent<Renderer>().material = DefaultMaterialXray;
-        }
-        selectedPart = null;
-        uiScript.xrayOn = true;
-        uiScript.opacitySlider.wholeNumbers = false;
-
-        UpdateCurrentMaterials();
-    }
-
-    public void SetColors()
-    {
+        colorsOn = true;
         foreach (Transform child in VisualModel.transform.GetChild(0))
         {
             foreach (var entry in colorDictionary)
@@ -567,7 +496,6 @@ public class UserInput : MonoBehaviour
         }
 
         selectedPart = null;
-        uiScript.xrayOn = false;
         uiScript.opacitySlider.wholeNumbers = true;
 
         UpdateCurrentMaterials();
@@ -599,7 +527,6 @@ public class UserInput : MonoBehaviour
         }
 
         selectedPart = null;
-        uiScript.xrayOn = false;
 
         UpdateCurrentMaterials();
     }
