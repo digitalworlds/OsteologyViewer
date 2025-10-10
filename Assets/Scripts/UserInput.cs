@@ -75,18 +75,6 @@ public class UserInput : MonoBehaviour
 
     public void Update()
     {
-        // Turn on tooltip
-        if (selectedPart != null)
-        {
-            foreach (ModelPart i in ModelData.Parts)
-            {
-                if (selectedPart.name.Contains(i.PartName))
-                {
-                    Tip.transform.Find("BG").Find("Text").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
-                }
-            }
-        }
-
         // Check for mouse button presses and handle movement/rotation
         if (Input.GetMouseButtonDown(1)) // Right mouse button
         {
@@ -354,20 +342,20 @@ public class UserInput : MonoBehaviour
             // Step 4: If we hit something, output the name of the object
             GameObject hitObject = hit.collider.gameObject;
 
-            if (selectedPart != null && selectedPart == hitObject)
-            {
-                // Deselect the part if it's already selected
-                if (selectedPart.GetComponent<Renderer>().material == SelectedMaterial)
-                {
-                    // Use DefaultMaterials dictionary to revert the material
-                    selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
-                    selectedPart = null;
-                    // Reset the slider when nothing is selected
-                    uiScript.opacitySlider.value = 1f; // Reset slider to default value (fully opaque)
-                }
-            }
-            else
-            {
+            // if (selectedPart != null && selectedPart == hitObject)
+            // {
+            //     // Deselect the part if it's already selected
+            //     if (selectedPart.GetComponent<Renderer>().material == SelectedMaterial)
+            //     {
+            //         // Use DefaultMaterials dictionary to revert the material
+            //         selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
+            //         selectedPart = null;
+            //         // Reset the slider when nothing is selected
+            //         uiScript.opacitySlider.value = 1f; // Reset slider to default value (fully opaque)
+            //     }
+            // }
+            // else
+            // {
                 // Deselect the previous part if there's one selected
                 if (selectedPart != null)
                 {
@@ -388,13 +376,25 @@ public class UserInput : MonoBehaviour
                     // If no opacity is stored yet, default it to 1 (fully opaque)
                     uiScript.opacitySlider.value = 1f;
                 }
-            }
+            //}
+            UpdateSideMenuAndTip();
+        }
+        else
+        {
+            // Deselect the previous part if there's one selected
+            if (selectedPart != null)
+            {
+                selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
 
-            UpdateSideMenu();
+                GameObject SideMenu = GameObject.Find("SideMenu");
+                SideMenu.transform.Find("Part").GetComponent<TextMeshProUGUI>().text = "No Part Selected";
+                SideMenu.transform.Find("Details").GetComponent<TextMeshProUGUI>().text = "Click on a part to see more here!";
+                Tip.transform.Find("BG").Find("Text").GetComponent<TextMeshProUGUI>().text = "No Part Selected";
+            }
         }
     }
 
-    public void UpdateSideMenu()
+    public void UpdateSideMenuAndTip()
     {
         GameObject SideMenu = GameObject.Find("SideMenu");
         foreach (ModelPart i in ModelData.Parts)
@@ -403,6 +403,7 @@ public class UserInput : MonoBehaviour
             {
                 SideMenu.transform.Find("Part").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
                 SideMenu.transform.Find("Details").GetComponent<TextMeshProUGUI>().text = i.PartDescription;
+                Tip.transform.Find("BG").Find("Text").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
             }
         }
     }

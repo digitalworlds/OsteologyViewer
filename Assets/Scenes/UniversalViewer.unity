@@ -2869,7 +2869,7 @@ MonoBehaviour:
   URL: https://digitalworlds.github.io/SkeletalGrowthDB/Models/AotusModels/Aotus107_Colors.json
   targetSize: 6
   scaleFactor: 0
-  SelectedMaterial: {fileID: 2100000, guid: dbd69698abfa84e4aa2d43e5749e1d88, type: 2}
+  SelectedMaterial: {fileID: 2100000, guid: cf5330a970f0f884092306d59cbab3a2, type: 2}
   VideoPlayer: {fileID: 86848519}
 --- !u!4 &1766328558
 Transform:
