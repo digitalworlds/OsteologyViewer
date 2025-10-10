@@ -27,6 +27,7 @@ public class UserInput : MonoBehaviour
     // Dictionary to store materials for each part of the VisualModel
     public Dictionary<string, Material> DefaultMaterials = new Dictionary<string, Material>();
     public Material SelectedMaterial;
+    public Material defaultMaterial;
     private Material DefaultMaterial;
 
     private Vector3 lastMousePosition;
@@ -275,6 +276,7 @@ public class UserInput : MonoBehaviour
                     {
                         // Add a MeshCollider to the child
                         child.gameObject.AddComponent<MeshCollider>();
+                        child.gameObject.GetComponent<Renderer>().material = defaultMaterial;
                         DefaultMaterials.Add(child.name, child.gameObject.GetComponent<Renderer>().material);
                         DefaultMaterial = child.GetComponent<Renderer>().material;
                     }
@@ -426,13 +428,13 @@ public class UserInput : MonoBehaviour
     {
         if (colorsOn)
         {
-            SetDefault();
             text.GetComponent<TextMeshProUGUI>().text = "C";
+            SetDefault();
         }
         else
         {
-            SetColors();
             text.GetComponent<TextMeshProUGUI>().text = "D";
+            SetColors();
         }
     }
 
@@ -441,7 +443,7 @@ public class UserInput : MonoBehaviour
         colorsOn = false;
         foreach (Transform child in VisualModel.transform.GetChild(0))
         {
-            child.GetComponent<Renderer>().material = DefaultMaterial;
+            child.GetComponent<Renderer>().material = defaultMaterial;
             DefaultMaterials[child.name] = child.GetComponent<Renderer>().material;
         }
 
