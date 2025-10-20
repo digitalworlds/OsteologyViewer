@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using GLTFast;
 using JetBrains.Annotations;
 using TMPro;
+using UnityEditor.ShaderKeywordFilter;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class UserInput : MonoBehaviour
 {
@@ -23,7 +25,6 @@ public class UserInput : MonoBehaviour
 
     private bool colorsOn = false;
 
-
     // Dictionary to store materials for each part of the VisualModel
     public Dictionary<string, Material> DefaultMaterials = new Dictionary<string, Material>();
     public Material SelectedMaterial;
@@ -40,7 +41,7 @@ public class UserInput : MonoBehaviour
     private float Zoom;
 
     private GameObject selectedPart;
-    private GameObject Tip;
+    //private GameObject Tip;
 
     private UIScript uiScript;
     private TextMeshProUGUI scaleValue;
@@ -48,6 +49,10 @@ public class UserInput : MonoBehaviour
     private Model ModelData;
 
     public GameObject VideoPlayer;
+
+    //Toggle List
+    public GameObject TogglePrefab; // assign in Inspector
+    public Transform ToggleListParent; // the VerticalLayoutGroup parent
 
     public void LoadFromHTML(string url)
     {
@@ -69,7 +74,7 @@ public class UserInput : MonoBehaviour
         StartCoroutine(LoadModel(URL));
         selectedPart = null;
 
-        Tip = GameObject.Find("Tip");
+        //Tip = GameObject.Find("Tip");
 
         uiScript = GameObject.Find("OverlayUI").GetComponent<UIScript>();
     }
@@ -261,6 +266,11 @@ public class UserInput : MonoBehaviour
 
         if (success)
         {
+            foreach (Transform child in ToggleListParent)
+            {
+                Destroy(child.gameObject);
+            }
+            
             Debug.Log("GLTF file is loaded.");
 
             VisualModel.transform.localScale /= 5;
@@ -279,6 +289,24 @@ public class UserInput : MonoBehaviour
                         child.gameObject.GetComponent<Renderer>().material = defaultMaterial;
                         DefaultMaterials.Add(child.name, child.gameObject.GetComponent<Renderer>().material);
                         DefaultMaterial = child.GetComponent<Renderer>().material;
+
+                        GameObject toggleGO = Instantiate(TogglePrefab, ToggleListParent);
+                        Toggle toggle = toggleGO.GetComponent<Toggle>();
+                        Text label = toggleGO.GetComponentInChildren<Text>();
+                        foreach(ModelPart part in ModelData.Parts)
+                        {
+                            if (part.PartName == child.name)
+                            {
+                                label.text = part.DisplayName;
+                                toggle.isOn = true;
+                            }
+                        }
+
+                        var thisChild = child;
+                        toggle.onValueChanged.AddListener((bool isOn) =>
+                        {
+                            thisChild.gameObject.SetActive(isOn);
+                        });
                     }
                 }
             }
@@ -295,6 +323,8 @@ public class UserInput : MonoBehaviour
                     combinedBounds.Encapsulate(renderer.bounds);
                 }
             }
+
+            
 
             // Find the largest dimension
             float largestDimension = Mathf.Max(combinedBounds.size.x, Mathf.Max(combinedBounds.size.y, combinedBounds.size.z));
@@ -391,7 +421,7 @@ public class UserInput : MonoBehaviour
                 GameObject SideMenu = GameObject.Find("SideMenu");
                 SideMenu.transform.Find("Part").GetComponent<TextMeshProUGUI>().text = "No Part Selected";
                 SideMenu.transform.Find("Details").GetComponent<TextMeshProUGUI>().text = "Click on a part to see more here!";
-                Tip.transform.Find("BG").Find("Text").GetComponent<TextMeshProUGUI>().text = "No Part Selected";
+                //Tip.transform.Find("BG").Find("Text").GetComponent<TextMeshProUGUI>().text = "No Part Selected";
             }
         }
     }
@@ -405,7 +435,7 @@ public class UserInput : MonoBehaviour
             {
                 SideMenu.transform.Find("Part").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
                 SideMenu.transform.Find("Details").GetComponent<TextMeshProUGUI>().text = i.PartDescription;
-                Tip.transform.Find("BG").Find("Text").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
+                //Tip.transform.Find("BG").Find("Text").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
             }
         }
     }

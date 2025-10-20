@@ -24,7 +24,7 @@ public class UIScript : MonoBehaviour
     
     public void Start()
     {
-        opacitySlider = GameObject.Find("Opacity").GetComponent<Slider>();
+        //opacitySlider = GameObject.Find("Opacity").GetComponent<Slider>();
         
         animator = GameObject.Find("SideMenu").GetComponent<Animator>();
         titleText = GameObject.Find("Title").GetComponent<TextMeshProUGUI>();
