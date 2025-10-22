@@ -16,7 +16,8 @@ public class UIScript : MonoBehaviour
     public float referenceLengthInMeters = 1f; // How long the bar represents, in real-world meters
     public Camera orthoCamera;
 
-    private Animator animator;
+    [SerializeField] private Animator animator;
+    [SerializeField] private Animator animator2;
     private bool menu;
 
     public Dictionary<GameObject, float> Opacities = new Dictionary<GameObject, float>(); 
@@ -25,8 +26,9 @@ public class UIScript : MonoBehaviour
     public void Start()
     {
         //opacitySlider = GameObject.Find("Opacity").GetComponent<Slider>();
-        
-        animator = GameObject.Find("SideMenu").GetComponent<Animator>();
+
+        // animator = GameObject.Find("SideMenu").GetComponent<Animator>();
+        // animator2 = GameObject.Find("LeftSideMenu").GetComponent<Animator>();
         titleText = GameObject.Find("Title").GetComponent<TextMeshProUGUI>();
 
         scaleBarUI = GameObject.Find("Scale").GetComponent<RectTransform>();
@@ -91,12 +93,14 @@ public class UIScript : MonoBehaviour
     private void OpenSideMenu()
     {
         animator.SetTrigger("Move");  // Trigger the opening animation
+        animator2.SetTrigger("Move");
         menu = true;  // Set the menu state to open
     }
 
     private void CloseSideMenu()
     {
         animator.SetTrigger("Move"); // Trigger the closing animation
+        animator2.SetTrigger("Move");
         menu = false;  // Set the menu state to closed
     } 
 
