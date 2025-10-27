@@ -57,7 +57,6 @@ public class UserInput : MonoBehaviour
     public void LoadFromHTML(string url)
     {
         StartCoroutine(LoadModel(url));
-        Name = "Loading...";
     }
 
     public void Start()
@@ -233,8 +232,8 @@ public class UserInput : MonoBehaviour
             // }
             //Debug.Log(ModelData.URL);
 
-            string url = JsonURL.Substring(0, JsonURL.LastIndexOf("/") + 1) + ModelData.URL;
-            ImportModel(ModelData.URL);
+            string url = JsonURL.Substring(0, JsonURL.LastIndexOf("/") + 1) + ModelData.URL.Substring(4);
+            ImportModel(url);
             StartCoroutine(LoadColorDictionary(ColorDictionaryURL));
         }
     }
