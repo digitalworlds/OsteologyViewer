@@ -1,16 +1,24 @@
 using System.Collections;
 using System.Collections.Generic;
 using GLTFast;
-using JetBrains.Annotations;
 using TMPro;
-using UnityEditor.ShaderKeywordFilter;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.InputSystem.EnhancedTouch;
+using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 public class UserInput : MonoBehaviour
 {
+   [SerializeField] private InputActionAsset inputActions;
+    private InputAction rotateAction, moveAction, zoomAction, selectAction;
+  
+    // Touch input tracking
+    private float lastPinchDistance;
+    private bool isPinching = false;
+
     public string ColorDictionaryURL;
     private Dictionary<string, string> colorDictionary = new Dictionary<string, string>();
 
@@ -54,6 +62,30 @@ public class UserInput : MonoBehaviour
     public GameObject TogglePrefab; // assign in Inspector
     public Transform ToggleListParent; // the VerticalLayoutGroup parent
 
+    void OnEnable()
+    {
+        EnhancedTouchSupport.Enable();
+
+        var map = inputActions.FindActionMap("Input");
+        rotateAction = map.FindAction("Rotate");
+        moveAction = map.FindAction("Move");
+        zoomAction = map.FindAction("Zoom");
+        selectAction = map.FindAction("Select");
+
+        rotateAction.Enable();
+        moveAction.Enable();
+        zoomAction.Enable();
+        selectAction.Enable();
+    }
+
+    void OnDisable()
+    {
+        rotateAction.Disable();
+        moveAction.Disable();
+        zoomAction.Disable();
+        selectAction.Disable();
+    }
+
     public void LoadFromHTML(string url)
     {
         StartCoroutine(LoadModel(url));
@@ -77,63 +109,214 @@ public class UserInput : MonoBehaviour
 
         uiScript = GameObject.Find("OverlayUI").GetComponent<UIScript>();
     }
-
-    public void Update()
+    void Update()
     {
-        // Check for mouse button presses and handle movement/rotation
-        if (Input.GetMouseButtonDown(1)) // Right mouse button
+        // if (Touch.activeTouches.Count >= 2)
+        // {
+        //     var t0 = Touch.activeTouches[0];
+        //     var t1 = Touch.activeTouches[1];
+
+        //     float currentDistance = Vector2.Distance(t0.screenPosition, t1.screenPosition);
+        //     float prevDistance = Vector2.Distance(
+        //         t0.screenPosition - t0.delta,
+        //         t1.screenPosition - t1.delta
+        //     );
+
+        //     float pinchDelta = currentDistance - prevDistance;
+
+        //     ZoomModel(pinchDelta * 0.01f);
+        // }
+    
+        HandleMouseInput();
+        HandleTouchInput();
+    }
+    // public void Update()
+    // {
+    //     // Check for mouse button presses and handle movement/rotation
+    //     if (Input.GetMouseButtonDown(1)) // Right mouse button
+    //     {
+    //         isRightClickPressed = true;
+    //         lastMousePosition = Input.mousePosition;
+    //         Cursor.visible = false;
+    //     }
+
+    //     if (Input.GetMouseButtonUp(1)) // Right mouse button released
+    //     {
+    //         isRightClickPressed = false;
+    //         Cursor.visible = true;
+    //     }
+
+    //     if (Input.GetMouseButtonDown(2)) // Middle mouse button
+    //     {
+    //         isMiddleClickPressed = true;
+    //         lastMousePosition = Input.mousePosition;
+    //         Cursor.visible = false;
+    //     }
+
+    //     if (Input.GetMouseButtonUp(2)) // Middle mouse button released
+    //     {
+    //         isMiddleClickPressed = false;
+    //         Cursor.visible = true;
+    //     }
+
+    //     if (Input.GetMouseButtonDown(0)) // Left mouse button
+    //     {
+    //         SelectPart();
+    //     }
+
+    //     // Zoom in/out
+    //     float scrollInput = Input.GetAxis("Mouse ScrollWheel"); // Get scroll input
+    //     if (scrollInput > 0f && Zoom > 0f)
+    //     {
+    //         ZoomIn();
+    //     }
+    //     else if (scrollInput < 0f && Zoom < 10f)
+    //     {
+    //         ZoomOut();
+    //     }
+
+    //     // If right mouse is held down, rotate the VisualModel
+    //     if (isRightClickPressed)
+    //     {
+    //         RotateModel();
+    //     }
+
+    //     // If middle mouse is held down, move the VisualModel
+    //     if (isMiddleClickPressed)
+    //     {
+    //         MoveModel();
+    //     }
+    // }
+
+    void HandleMouseInput()
+    {
+        // Right click rotate
+        if (Mouse.current.rightButton.wasPressedThisFrame)
         {
             isRightClickPressed = true;
-            lastMousePosition = Input.mousePosition;
+            lastMousePosition = Mouse.current.position.ReadValue();
             Cursor.visible = false;
         }
-
-        if (Input.GetMouseButtonUp(1)) // Right mouse button released
+        if (Mouse.current.rightButton.wasReleasedThisFrame)
         {
             isRightClickPressed = false;
             Cursor.visible = true;
         }
 
-        if (Input.GetMouseButtonDown(2)) // Middle mouse button
+        // Middle click move
+        if (Mouse.current.middleButton.wasPressedThisFrame)
         {
             isMiddleClickPressed = true;
-            lastMousePosition = Input.mousePosition;
+            lastMousePosition = Mouse.current.position.ReadValue();
             Cursor.visible = false;
         }
-
-        if (Input.GetMouseButtonUp(2)) // Middle mouse button released
+        if (Mouse.current.middleButton.wasReleasedThisFrame)
         {
             isMiddleClickPressed = false;
             Cursor.visible = true;
         }
 
-        if (Input.GetMouseButtonDown(0)) // Left mouse button
+        // Left click select
+        if (Mouse.current.leftButton.wasPressedThisFrame)
         {
             SelectPart();
         }
 
-        // Zoom in/out
-        float scrollInput = Input.GetAxis("Mouse ScrollWheel"); // Get scroll input
-        if (scrollInput > 0f && Zoom > 0f)
-        {
+        // Scroll zoom
+        float scrollValue = Mouse.current.scroll.ReadValue().y;
+        if (scrollValue > 0f)
             ZoomIn();
-        }
-        else if (scrollInput < 0f && Zoom < 10f)
-        {
+        else if (scrollValue < 0f)
             ZoomOut();
-        }
 
-        // If right mouse is held down, rotate the VisualModel
+        // Rotate or move model
         if (isRightClickPressed)
-        {
             RotateModel();
-        }
-
-        // If middle mouse is held down, move the VisualModel
         if (isMiddleClickPressed)
-        {
             MoveModel();
+    }
+
+    void HandleTouchInput()
+    {
+        if (Touchscreen.current == null || Touchscreen.current.touches.Count == 0)
+            return;
+
+        var touches = Touchscreen.current.touches;
+
+        // Single finger drag = rotate
+        if (touches.Count == 1)
+        {
+            var touch = touches[0];
+            if (touch.phase.ReadValue() == UnityEngine.InputSystem.TouchPhase.Moved)
+            {
+                Vector2 delta = touch.delta.ReadValue();
+                VisualModel.transform.Rotate(Vector3.up, -delta.x * rotationSpeed * Time.deltaTime, Space.World);
+                VisualModel.transform.Rotate(Vector3.right, delta.y * rotationSpeed * Time.deltaTime, Space.World);
+            }
+
+            // Tap to select
+            if (touch.phase.ReadValue() == UnityEngine.InputSystem.TouchPhase.Ended && touch.delta.ReadValue().magnitude < 5f)
+            {
+                SelectPart();
+            }
         }
+        // Two-finger pinch = zoom
+        else if (touches.Count == 2)
+        {
+            var touch1 = touches[0];
+            var touch2 = touches[1];
+
+            float currentDistance = Vector2.Distance(touch1.position.ReadValue(), touch2.position.ReadValue());
+
+            if (!isPinching)
+            {
+                lastPinchDistance = currentDistance;
+                isPinching = true;
+            }
+            else
+            {
+                float delta = currentDistance - lastPinchDistance;
+
+                if (Mathf.Abs(delta) > 5f)
+                {
+                    if (delta > 0)
+                        ZoomIn();
+                    else
+                        ZoomOut();
+                }
+
+                lastPinchDistance = currentDistance;
+            }
+        }
+        else
+        {
+            isPinching = false;
+        }
+    }
+
+    void RotateModel()
+    {
+        Vector2 currentPos = Mouse.current.position.ReadValue();
+        Vector2 delta = currentPos - (Vector2)lastMousePosition;
+
+        float rotX = delta.x * rotationSpeed * Time.deltaTime;
+        float rotY = delta.y * rotationSpeed * Time.deltaTime;
+
+        VisualModel.transform.Rotate(Vector3.up, -rotX, Space.World);
+        VisualModel.transform.Rotate(Vector3.right, rotY, Space.World);
+
+        lastMousePosition = currentPos;
+    }
+
+    void MoveModel()
+    {
+        Vector2 currentPos = Mouse.current.position.ReadValue();
+        Vector2 delta = currentPos - (Vector2)lastMousePosition;
+
+        Vector3 movement = new Vector3(delta.x, delta.y, 0) * (movementSpeed * Zoom) * Time.deltaTime;
+        VisualModel.transform.Translate(movement, Space.World);
+
+        lastMousePosition = currentPos;
     }
 
     public void ZoomIn()
@@ -154,37 +337,37 @@ public class UserInput : MonoBehaviour
         scaleValue.text = value.ToString()  + "mm";
     }
 
-    void RotateModel()
-    {
-        // Get the difference between the current and last mouse position
-        Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
+    // void RotateModel()
+    // {
+    //     // Get the difference between the current and last mouse position
+    //     Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
 
-        // Calculate rotation based on mouse movement
-        float rotX = mouseDelta.x * rotationSpeed * Time.deltaTime;
-        float rotY = mouseDelta.y * rotationSpeed * Time.deltaTime;
+    //     // Calculate rotation based on mouse movement
+    //     float rotX = mouseDelta.x * rotationSpeed * Time.deltaTime;
+    //     float rotY = mouseDelta.y * rotationSpeed * Time.deltaTime;
 
-        // Rotate the VisualModel around the X and Y axes
-        VisualModel.transform.Rotate(Vector3.up, -rotX, Space.World); // Rotate around Y axis (horizontal mouse movement)
-        VisualModel.transform.Rotate(Vector3.right, rotY, Space.World); // Rotate around X axis (vertical mouse movement)
+    //     // Rotate the VisualModel around the X and Y axes
+    //     VisualModel.transform.Rotate(Vector3.up, -rotX, Space.World); // Rotate around Y axis (horizontal mouse movement)
+    //     VisualModel.transform.Rotate(Vector3.right, rotY, Space.World); // Rotate around X axis (vertical mouse movement)
 
-        // Update last mouse position for the next frame
-        lastMousePosition = Input.mousePosition;
-    }
+    //     // Update last mouse position for the next frame
+    //     lastMousePosition = Input.mousePosition;
+    // }
 
-    void MoveModel()
-    {
-        // Get mouse movement in screen space and translate the object accordingly
-        Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
+    // void MoveModel()
+    // {
+    //     // Get mouse movement in screen space and translate the object accordingly
+    //     Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
 
-        // Convert the mouse movement into world space (movement in 3D)
-        Vector3 movement = new Vector3(mouseDelta.x, mouseDelta.y, 0) * (movementSpeed * Zoom) * Time.deltaTime;
+    //     // Convert the mouse movement into world space (movement in 3D)
+    //     Vector3 movement = new Vector3(mouseDelta.x, mouseDelta.y, 0) * (movementSpeed * Zoom) * Time.deltaTime;
 
-        // Move the VisualModel (here the movement is applied in local space)
-        VisualModel.transform.Translate(movement, Space.World);
+    //     // Move the VisualModel (here the movement is applied in local space)
+    //     VisualModel.transform.Translate(movement, Space.World);
 
-        // Update last mouse position for next frame
-        lastMousePosition = Input.mousePosition;
-    }
+    //     // Update last mouse position for next frame
+    //     lastMousePosition = Input.mousePosition;
+    // }
 
     public void ResetView()
     {
