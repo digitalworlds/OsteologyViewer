@@ -441,6 +441,7 @@ public class UserInput : MonoBehaviour
 
     async void ImportModel(string ModelURL)
     {
+        Debug.Log("Importing");
         var gltfImport = new GltfImport();
         await gltfImport.Load(ModelURL);
         var instantiator = new GameObjectInstantiator(gltfImport, VisualModel.transform);
@@ -510,7 +511,8 @@ public class UserInput : MonoBehaviour
             float largestDimension = Mathf.Max(combinedBounds.size.x, Mathf.Max(combinedBounds.size.y, combinedBounds.size.z));
 
             // Calculate scale factor
-            scaleFactor = targetSize / largestDimension * ModelData.BiologicalScaleMM;
+            Debug.Log(ModelData.BiologicalScaleMM);
+            scaleFactor = targetSize / (largestDimension * ModelData.BiologicalScaleMM);
 
             // Apply scale to root transform
             VisualModel.transform.localScale *= scaleFactor;
