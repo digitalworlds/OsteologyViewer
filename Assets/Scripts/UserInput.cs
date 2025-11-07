@@ -506,13 +506,11 @@ public class UserInput : MonoBehaviour
                 }
             }
 
-            
-
             // Find the largest dimension
             float largestDimension = Mathf.Max(combinedBounds.size.x, Mathf.Max(combinedBounds.size.y, combinedBounds.size.z));
 
             // Calculate scale factor
-            scaleFactor = targetSize / largestDimension;
+            scaleFactor = targetSize / largestDimension * ModelData.BiologicalScaleMM;
 
             // Apply scale to root transform
             VisualModel.transform.localScale *= scaleFactor;

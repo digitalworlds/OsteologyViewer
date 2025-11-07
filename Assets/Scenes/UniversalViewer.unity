@@ -2944,6 +2944,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2ef892a23684c144857213adb2cdbdb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  inputActions: {fileID: -944628639613478452, guid: 940fc7fd7a7515e43b13a19ff671333e,
+    type: 3}
   ColorDictionaryURL: https://digitalworlds.github.io/SkeletalGrowthDB/ColorDictionary.json
   rotationSpeed: 50
   movementSpeed: 0.2

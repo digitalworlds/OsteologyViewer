@@ -17,6 +17,7 @@ public class Model
     public ModelPart[] Parts;
     public Vector3 OrientationVector;
     public int[] Orientation;
+    public float BiologicalScaleMM;
 }
 
 [Serializable]
