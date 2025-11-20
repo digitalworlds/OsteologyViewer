@@ -8,7 +8,6 @@ using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.InputSystem.EnhancedTouch;
-using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 public class UserInput : MonoBehaviour
 {
@@ -415,7 +414,8 @@ public class UserInput : MonoBehaviour
             // }
             //Debug.Log(ModelData.URL);
 
-            string url = JsonURL.Substring(0, JsonURL.LastIndexOf("/") + 1) + ModelData.URL.Substring(4);
+            string url = JsonURL.Substring(0, JsonURL.LastIndexOf("/") + 1) + ModelData.URL;
+            Debug.Log("Importing from: " + url);
             ImportModel(url);
             StartCoroutine(LoadColorDictionary(ColorDictionaryURL));
         }
@@ -447,6 +447,8 @@ public class UserInput : MonoBehaviour
         var instantiator = new GameObjectInstantiator(gltfImport, VisualModel.transform);
         var success = await gltfImport.InstantiateMainSceneAsync(instantiator);
 
+        Debug.Log("here");
+        
         if (success)
         {
             foreach (Transform child in ToggleListParent)
@@ -538,6 +540,10 @@ public class UserInput : MonoBehaviour
             VideoPlayer.SetActive(false);
             uiScript.enabled = true;
             UpdateCurrentMaterials();
+        }
+        else
+        {
+            Debug.Log("Could not import");
         }
     }
 
