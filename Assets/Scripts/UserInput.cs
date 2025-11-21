@@ -681,7 +681,7 @@ public class UserInput : MonoBehaviour
                 string key = entry.Key;
                 string value = entry.Value;
 
-                Debug.Log(key + ", " + value);
+                //Debug.Log(key + ", " + value);
 
                 if (child.name.Contains(key))
                 {
