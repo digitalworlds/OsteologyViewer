@@ -8,14 +8,16 @@ public class UIScript_Dual : MonoBehaviour
 {
     public UserInput_Dual UserInput;
     public Slider opacitySlider; // Slider for opacity adjustment
-    private TextMeshProUGUI titleText; 
+    [SerializeField] private TextMeshProUGUI titleText1; 
+    [SerializeField] private TextMeshProUGUI titleText2;
 
     public RectTransform scaleBarUI; // The visual bar (e.g., a black line)
     public TextMeshProUGUI scaleLabel; // The label showing real-world length
     public float referenceLengthInMeters = 1f; // How long the bar represents, in real-world meters
     public Camera orthoCamera;
 
-    private Animator animator;
+    [SerializeField] private Animator animator;
+    [SerializeField] private Animator animator2;
     private bool menu;
 
     public Dictionary<GameObject, float> Opacities = new Dictionary<GameObject, float>(); 
@@ -23,10 +25,9 @@ public class UIScript_Dual : MonoBehaviour
     
     public void Start()
     {
-        opacitySlider = GameObject.Find("Opacity").GetComponent<Slider>();
+        //opacitySlider = GameObject.Find("Opacity").GetComponent<Slider>();
         
-        animator = GameObject.Find("SideMenu").GetComponent<Animator>();
-        titleText = GameObject.Find("Title").GetComponent<TextMeshProUGUI>();
+        //animator = GameObject.Find("SideMenu").GetComponent<Animator>();
 
         scaleBarUI = GameObject.Find("Scale").GetComponent<RectTransform>();
         scaleLabel = GameObject.Find("ScaleValue").GetComponent<TextMeshProUGUI>();
@@ -38,8 +39,11 @@ public class UIScript_Dual : MonoBehaviour
     public void Update()
     {
         if(UserInput)
-            titleText.text = UserInput.Name;
-
+        {
+            titleText1.text = UserInput.Name1;
+            titleText2.text = UserInput.Name2;
+        }
+        
         ChangeOpacity();
         UpdateScaleBar();
     }
@@ -89,12 +93,14 @@ public class UIScript_Dual : MonoBehaviour
     private void OpenSideMenu()
     {
         animator.SetTrigger("Move");  // Trigger the opening animation
+        animator2.SetTrigger("Move");
         menu = true;  // Set the menu state to open
     }
 
     private void CloseSideMenu()
     {
         animator.SetTrigger("Move"); // Trigger the closing animation
+        animator2.SetTrigger("Move");
         menu = false;  // Set the menu state to closed
     } 
 
@@ -103,7 +109,7 @@ public class UIScript_Dual : MonoBehaviour
         GameObject currentPart = UserInput.GetCurrentPart();
         if (currentPart == null) return;
 
-        float modelScale = currentPart.transform.localScale.x; // Assume uniform scale
+        float modelScale = currentPart.transform.localScale.x * UserInput.scaleFactor; // Assume uniform scale
         float effectiveLength = referenceLengthInMeters * modelScale;
 
         // World units per pixel = (orthographic size * 2) / screen height

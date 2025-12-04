@@ -4,11 +4,21 @@ using System.Collections.Generic;
 using GLTFast;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.EnhancedTouch;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class UserInput_Dual : MonoBehaviour
 {   
+    [SerializeField] private InputActionAsset inputActions;
+    private InputAction rotateAction, moveAction, zoomAction, selectAction;
+  
+    // Touch input tracking
+    private float lastPinchDistance;
+    private bool isPinching = false;
+    
     public string ColorDictionaryURL;
     private Dictionary<string, string> colorDictionary = new Dictionary<string, string>();
 
@@ -16,17 +26,20 @@ public class UserInput_Dual : MonoBehaviour
     public float movementSpeed = 0.2f; // Movement speed
     public float defaultZoom;
 
-    public string Name;
+    public string Name1;
+    public string Name2;
     public string Model1URL;
     public string Model2URL;
     public float targetSize = 6.0f;
 
+    public float scaleFactor = 0;
+    private bool colorsOn = false;
+
     // Dictionary to store materials for each part of the VisualModel
     public Dictionary<string, Material> DefaultMaterials = new Dictionary<string, Material>();
     public Material SelectedMaterial;
+    public Material defaultMaterial;
     private Material DefaultMaterial;
-    public Material DefaultMaterialXray;
-    public Material SelectedMaterialXray;
 
     private Vector3 lastMousePosition;
     private bool isRightClickPressed = false;
@@ -50,18 +63,51 @@ public class UserInput_Dual : MonoBehaviour
 
     public GameObject VideoPlayer;
 
-    private bool colorsOn = false;
+    //Toggle List
+    public GameObject TogglePrefab; // assign in Inspector
+    public Transform ToggleListParent; // the VerticalLayoutGroup parent
 
     public void LoadFromHTML(string url1, string url2)
     {
         StartCoroutine(LoadModel(url1, VisualModel1));
         StartCoroutine(LoadModel(url2, VisualModel1));
-        Name = "Loading...";
+        Name1 = "Loading...";
+        Name2 = "Loading...";
+    }
+
+    void OnEnable()
+    {
+        EnhancedTouchSupport.Enable();
+
+        var map = inputActions.FindActionMap("Input");
+        rotateAction = map.FindAction("Rotate");
+        moveAction = map.FindAction("Move");
+        zoomAction = map.FindAction("Zoom");
+        selectAction = map.FindAction("Select");
+
+        rotateAction.Enable();
+        moveAction.Enable();
+        zoomAction.Enable();
+        selectAction.Enable();
+    }
+
+    void OnDisable()
+    {
+        rotateAction.Disable();
+        moveAction.Disable();
+        zoomAction.Disable();
+        selectAction.Disable();
     }
 
     public void Start()
     {
-        Name = "Loading...";
+        // foreach (Transform child in ToggleListParent)
+        // {
+        //     Destroy(child.gameObject);
+        // }
+
+        Name1 = "Loading...";
+        Name2 = "Loading...";
         Zoom = defaultZoom;
 
         VisualModel1 = GameObject.Find("Model1");
@@ -84,74 +130,233 @@ public class UserInput_Dual : MonoBehaviour
         uiScript = GameObject.Find("OverlayUI").GetComponent<UIScript_Dual>();
     }
 
-    public void Update()
+    void Update()
     {
-        // Turn on tooltip
-        if (selectedPart != null)
-        {
-            foreach (ModelPart i in ModelData.Parts)
-            {
-                if(selectedPart.name.Contains(i.PartName))
-                {
-                    Tip.transform.Find("BG").Find("Text").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
-                }
-            }
-        }
+        // if (Touch.activeTouches.Count >= 2)
+        // {
+        //     var t0 = Touch.activeTouches[0];
+        //     var t1 = Touch.activeTouches[1];
 
-        // Check for mouse button presses and handle movement/rotation
-        if (Input.GetMouseButtonDown(1)) // Right mouse button
+        //     float currentDistance = Vector2.Distance(t0.screenPosition, t1.screenPosition);
+        //     float prevDistance = Vector2.Distance(
+        //         t0.screenPosition - t0.delta,
+        //         t1.screenPosition - t1.delta
+        //     );
+
+        //     float pinchDelta = currentDistance - prevDistance;
+
+        //     ZoomModel(pinchDelta * 0.01f);
+        // }
+    
+        HandleMouseInput();
+        HandleTouchInput();
+    }
+
+    // public void Update()
+    // {
+    //     // Turn on tooltip
+    //     if (selectedPart != null)
+    //     {
+    //         foreach (ModelPart i in ModelData.Parts)
+    //         {
+    //             if(selectedPart.name.Contains(i.PartName))
+    //             {
+    //                 Tip.transform.Find("BG").Find("Text").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
+    //             }
+    //         }
+    //     }
+
+    //     // Check for mouse button presses and handle movement/rotation
+    //     if (Input.GetMouseButtonDown(1)) // Right mouse button
+    //     {
+    //         isRightClickPressed = true;
+    //         lastMousePosition = Input.mousePosition;
+    //         Cursor.visible = false;
+    //     }
+
+    //     if (Input.GetMouseButtonUp(1)) // Right mouse button released
+    //     {
+    //         isRightClickPressed = false;
+    //         Cursor.visible = true;
+    //     }
+
+    //     if (Input.GetMouseButtonDown(2)) // Middle mouse button
+    //     {
+    //         isMiddleClickPressed = true;
+    //         lastMousePosition = Input.mousePosition;
+    //         Cursor.visible = false;
+    //     }
+
+    //     if (Input.GetMouseButtonUp(2)) // Middle mouse button released
+    //     {
+    //         isMiddleClickPressed = false;
+    //         Cursor.visible = true;
+    //     }
+
+    //     if (Input.GetMouseButtonDown(0)) // Left mouse button
+    //     {
+    //         SelectPart();
+    //     }
+
+    //     // Zoom in/out
+    //     float scrollInput = Input.GetAxis("Mouse ScrollWheel"); // Get scroll input
+    //     if (scrollInput > 0f && Zoom > 0f)
+    //     {
+    //         ZoomIn();
+    //     }
+    //     else if (scrollInput < 0f && Zoom < 10f)
+    //     {
+    //         ZoomOut();
+    //     }
+
+    //     // If right mouse is held down, rotate the VisualModel
+    //     if (isRightClickPressed)
+    //     {
+    //         RotateModel();
+    //     }
+
+    //     // If middle mouse is held down, move the VisualModel
+    //     if (isMiddleClickPressed)
+    //     {
+    //         MoveModel();
+    //     }
+    // }
+
+    void HandleMouseInput()
+    {
+        // Right click rotate
+        if (Mouse.current.rightButton.wasPressedThisFrame)
         {
             isRightClickPressed = true;
-            lastMousePosition = Input.mousePosition;
+            lastMousePosition = Mouse.current.position.ReadValue();
             Cursor.visible = false;
         }
-
-        if (Input.GetMouseButtonUp(1)) // Right mouse button released
+        if (Mouse.current.rightButton.wasReleasedThisFrame)
         {
             isRightClickPressed = false;
             Cursor.visible = true;
         }
 
-        if (Input.GetMouseButtonDown(2)) // Middle mouse button
+        // Middle click move
+        if (Mouse.current.middleButton.wasPressedThisFrame)
         {
             isMiddleClickPressed = true;
-            lastMousePosition = Input.mousePosition;
+            lastMousePosition = Mouse.current.position.ReadValue();
             Cursor.visible = false;
         }
-
-        if (Input.GetMouseButtonUp(2)) // Middle mouse button released
+        if (Mouse.current.middleButton.wasReleasedThisFrame)
         {
             isMiddleClickPressed = false;
             Cursor.visible = true;
         }
 
-        if (Input.GetMouseButtonDown(0)) // Left mouse button
+        // Left click select
+        if (Mouse.current.leftButton.wasPressedThisFrame)
         {
             SelectPart();
         }
 
-        // Zoom in/out
-        float scrollInput = Input.GetAxis("Mouse ScrollWheel"); // Get scroll input
-        if (scrollInput > 0f && Zoom > 0f)
-        {
+        // Scroll zoom
+        float scrollValue = Mouse.current.scroll.ReadValue().y;
+        if (scrollValue > 0f)
             ZoomIn();
-        }
-        else if (scrollInput < 0f && Zoom < 10f)
-        {
+        else if (scrollValue < 0f)
             ZoomOut();
-        }
 
-        // If right mouse is held down, rotate the VisualModel
+        // Rotate or move model
         if (isRightClickPressed)
-        {
             RotateModel();
-        }
-
-        // If middle mouse is held down, move the VisualModel
         if (isMiddleClickPressed)
-        {
             MoveModel();
+    }
+
+    void HandleTouchInput()
+    {
+        if (Touchscreen.current == null || Touchscreen.current.touches.Count == 0)
+            return;
+
+        var touches = Touchscreen.current.touches;
+
+        // Single finger drag = rotate
+        if (touches.Count == 1)
+        {
+            var touch = touches[0];
+            if (touch.phase.ReadValue() == UnityEngine.InputSystem.TouchPhase.Moved)
+            {
+                Vector2 delta = touch.delta.ReadValue();
+                VisualModel1.transform.Rotate(Vector3.up, -delta.x * rotationSpeed * Time.deltaTime, Space.World);
+                VisualModel1.transform.Rotate(Vector3.right, delta.y * rotationSpeed * Time.deltaTime, Space.World);
+
+                VisualModel2.transform.Rotate(Vector3.up, -delta.x * rotationSpeed * Time.deltaTime, Space.World);
+                VisualModel2.transform.Rotate(Vector3.right, delta.y * rotationSpeed * Time.deltaTime, Space.World);
+            }
+
+            // Tap to select
+            if (touch.phase.ReadValue() == UnityEngine.InputSystem.TouchPhase.Ended && touch.delta.ReadValue().magnitude < 5f)
+            {
+                SelectPart();
+            }
         }
+        // Two-finger pinch = zoom
+        else if (touches.Count == 2)
+        {
+            var touch1 = touches[0];
+            var touch2 = touches[1];
+
+            float currentDistance = Vector2.Distance(touch1.position.ReadValue(), touch2.position.ReadValue());
+
+            if (!isPinching)
+            {
+                lastPinchDistance = currentDistance;
+                isPinching = true;
+            }
+            else
+            {
+                float delta = currentDistance - lastPinchDistance;
+
+                if (Mathf.Abs(delta) > 5f)
+                {
+                    if (delta > 0)
+                        ZoomIn();
+                    else
+                        ZoomOut();
+                }
+
+                lastPinchDistance = currentDistance;
+            }
+        }
+        else
+        {
+            isPinching = false;
+        }
+    }
+
+    void RotateModel()
+    {
+        Vector2 currentPos = Mouse.current.position.ReadValue();
+        Vector2 delta = currentPos - (Vector2)lastMousePosition;
+
+        float rotX = delta.x * rotationSpeed * Time.deltaTime;
+        float rotY = delta.y * rotationSpeed * Time.deltaTime;
+
+        VisualModel1.transform.Rotate(Vector3.up, -rotX, Space.World);
+        VisualModel1.transform.Rotate(Vector3.right, rotY, Space.World);
+        VisualModel2.transform.Rotate(Vector3.up, -rotX, Space.World);
+        VisualModel2.transform.Rotate(Vector3.right, rotY, Space.World);
+
+        lastMousePosition = currentPos;
+    }
+
+    void MoveModel()
+    {
+        Vector2 currentPos = Mouse.current.position.ReadValue();
+        Vector2 delta = currentPos - (Vector2)lastMousePosition;
+
+        Vector3 movement = new Vector3(delta.x, delta.y, 0) * (movementSpeed * Zoom) * Time.deltaTime;
+        VisualModel1.transform.Translate(movement, Space.World);
+        VisualModel2.transform.Translate(movement, Space.World);
+
+        lastMousePosition = currentPos;
     }
 
     public void ZoomIn()
@@ -172,41 +377,41 @@ public class UserInput_Dual : MonoBehaviour
         scaleValue.text = Zoom.ToString() + "mm";
     }
 
-    void RotateModel()
-    {
-        // Get the difference between the current and last mouse position
-        Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
+    // void RotateModel()
+    // {
+    //     // Get the difference between the current and last mouse position
+    //     Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
 
-        // Calculate rotation based on mouse movement
-        float rotX = mouseDelta.x * rotationSpeed * Time.deltaTime;
-        float rotY = mouseDelta.y * rotationSpeed * Time.deltaTime;
+    //     // Calculate rotation based on mouse movement
+    //     float rotX = mouseDelta.x * rotationSpeed * Time.deltaTime;
+    //     float rotY = mouseDelta.y * rotationSpeed * Time.deltaTime;
 
-        // Rotate the VisualModel around the X and Y axes
-        VisualModel1.transform.Rotate(Vector3.up, -rotX, Space.World); // Rotate around Y axis (horizontal mouse movement)
-        VisualModel1.transform.Rotate(Vector3.right, rotY, Space.World); // Rotate around X axis (vertical mouse movement)
+    //     // Rotate the VisualModel around the X and Y axes
+    //     VisualModel1.transform.Rotate(Vector3.up, -rotX, Space.World); // Rotate around Y axis (horizontal mouse movement)
+    //     VisualModel1.transform.Rotate(Vector3.right, rotY, Space.World); // Rotate around X axis (vertical mouse movement)
 
-        VisualModel2.transform.Rotate(Vector3.up, -rotX, Space.World); // Rotate around Y axis (horizontal mouse movement)
-        VisualModel2.transform.Rotate(Vector3.right, rotY, Space.World); // Rotate around X axis (vertical mouse movement)
+    //     VisualModel2.transform.Rotate(Vector3.up, -rotX, Space.World); // Rotate around Y axis (horizontal mouse movement)
+    //     VisualModel2.transform.Rotate(Vector3.right, rotY, Space.World); // Rotate around X axis (vertical mouse movement)
 
-        // Update last mouse position for the next frame
-        lastMousePosition = Input.mousePosition;
-    }
+    //     // Update last mouse position for the next frame
+    //     lastMousePosition = Input.mousePosition;
+    // }
 
-    void MoveModel()
-    {
-        // Get mouse movement in screen space and translate the object accordingly
-        Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
+    // void MoveModel()
+    // {
+    //     // Get mouse movement in screen space and translate the object accordingly
+    //     Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
 
-        // Convert the mouse movement into world space (movement in 3D)
-        Vector3 movement = new Vector3(mouseDelta.x, mouseDelta.y, 0) * (movementSpeed * Zoom) * Time.deltaTime;
+    //     // Convert the mouse movement into world space (movement in 3D)
+    //     Vector3 movement = new Vector3(mouseDelta.x, mouseDelta.y, 0) * (movementSpeed * Zoom) * Time.deltaTime;
 
-        // Move the VisualModel (here the movement is applied in local space)
-        VisualModel1.transform.Translate(movement, Space.World);
-        VisualModel2.transform.Translate(movement, Space.World);
+    //     // Move the VisualModel (here the movement is applied in local space)
+    //     VisualModel1.transform.Translate(movement, Space.World);
+    //     VisualModel2.transform.Translate(movement, Space.World);
 
-        // Update last mouse position for next frame
-        lastMousePosition = Input.mousePosition;
-    }
+    //     // Update last mouse position for next frame
+    //     lastMousePosition = Input.mousePosition;
+    // }
 
     public void ResetView()
     {
@@ -244,7 +449,15 @@ public class UserInput_Dual : MonoBehaviour
             string json = jsonRequest.downloadHandler.text;
             ModelData = JsonUtility.FromJson<Model>(json);
 
-            Name = ModelData.ModelName;
+            if (visual == VisualModel1)
+            {
+                Name1 = ModelData.ModelName;
+            }
+            else
+            {
+                Name2 = ModelData.ModelName;
+            }
+            
             Debug.Log(ModelData.Orientation);
 
             ModelData.OrientationVector = new Vector3(
@@ -284,20 +497,107 @@ public class UserInput_Dual : MonoBehaviour
         }
     }
 
-    async void ImportModel(string ModelURL, GameObject visual)
+    // async void ImportModel(string ModelURL, GameObject visual)
+    // {
+    //     var gltfImport = new GltfImport();
+    //     await gltfImport.Load(ModelURL);
+    //     var instantiator = new GameObjectInstantiator(gltfImport, visual.transform);
+    //     var success = await gltfImport.InstantiateMainSceneAsync(instantiator);
+
+    //     if (success)
+    //     {
+    //         Debug.Log("GLTF file is loaded.");
+
+    //         visual.transform.localScale /= 5;
+
+    //         foreach (Transform child in visual.transform.GetChild(0))
+    //         {
+    //             // Add a MeshCollider to the child if it has a MeshFilter (which indicates it has a mesh)
+    //             MeshFilter meshFilter = child.GetComponent<MeshFilter>();
+    //             if (meshFilter != null)
+    //             {
+    //                 // Ensure the child doesn't already have a MeshCollider
+    //                 if (child.GetComponent<MeshCollider>() == null)
+    //                 {
+    //                     // Add a MeshCollider to the child
+    //                     child.gameObject.AddComponent<MeshCollider>();
+    //                     DefaultMaterials.Add(child.name, child.gameObject.GetComponent<Renderer>().material);
+    //                     DefaultMaterial = child.GetComponent<Renderer>().material;
+    //                     if (visual == VisualModel1)
+    //                     {
+    //                         child.gameObject.layer = LayerMask.NameToLayer("Model1");
+    //                     }
+    //                     else
+    //                     {
+    //                         child.gameObject.layer = LayerMask.NameToLayer("Model2");
+    //                     }
+    //                 }
+    //             }
+    //         }
+
+    //         // Calculate combined bounds
+    //         Bounds combinedBounds = new Bounds(visual.transform.position, Vector3.zero);
+    //         Renderer[] renderers = visual.GetComponentsInChildren<Renderer>();
+
+    //         if (renderers.Length > 0)
+    //         {
+    //             combinedBounds = renderers[0].bounds;
+    //             foreach (Renderer renderer in renderers)
+    //             {
+    //                 combinedBounds.Encapsulate(renderer.bounds);
+    //             }
+    //         }
+
+    //         // Find the largest dimension
+    //         float largestDimension = Mathf.Max(combinedBounds.size.x, Mathf.Max(combinedBounds.size.y, combinedBounds.size.z));
+
+    //         // Calculate scale factor
+    //         float scaleFactor = targetSize / largestDimension;
+
+    //         // Apply scale to root transform
+    //         visual.transform.localScale *= scaleFactor;
+    //         //uiScript.referenceLengthInMeters /= scaleFactor;
+
+    //         Debug.Log($"Scaled model by {scaleFactor} to fit within {targetSize} unit bounding box.");
+
+    //         Debug.Log(ModelData.OrientationVector[0] + " " + ModelData.OrientationVector[1] + " " + ModelData.OrientationVector[2]);
+    //         visual.transform.localEulerAngles = new Vector3(ModelData.OrientationVector[0], ModelData.OrientationVector[1], ModelData.OrientationVector[2]);
+
+    //         if (SceneManager.GetActiveScene().name.Contains("Taxon"))
+    //         {
+    //             SetBoneAndTeeth();
+    //         }
+    //         else if (SceneManager.GetActiveScene().name.Contains("Tooth"))
+    //         {
+    //             SetColors();
+    //         }
+
+    //         VideoPlayer.SetActive(false);
+    //         uiScript.enabled = true;
+    //         UpdateCurrentMaterials();
+    //     }
+    // }
+
+    async void ImportModel(string ModelURL, GameObject VisualModel)
     {
+        Debug.Log("Importing");
         var gltfImport = new GltfImport();
         await gltfImport.Load(ModelURL);
-        var instantiator = new GameObjectInstantiator(gltfImport, visual.transform);
+        var instantiator = new GameObjectInstantiator(gltfImport, VisualModel.transform);
         var success = await gltfImport.InstantiateMainSceneAsync(instantiator);
-
+        
         if (success)
         {
+            // foreach (Transform child in ToggleListParent)
+            // {
+            //     Destroy(child.gameObject);
+            // }
+            
             Debug.Log("GLTF file is loaded.");
 
-            visual.transform.localScale /= 5;
+            VisualModel.transform.localScale /= 5;
 
-            foreach (Transform child in visual.transform.GetChild(0))
+            foreach (Transform child in VisualModel.transform.GetChild(0))
             {
                 // Add a MeshCollider to the child if it has a MeshFilter (which indicates it has a mesh)
                 MeshFilter meshFilter = child.GetComponent<MeshFilter>();
@@ -308,9 +608,11 @@ public class UserInput_Dual : MonoBehaviour
                     {
                         // Add a MeshCollider to the child
                         child.gameObject.AddComponent<MeshCollider>();
+                        child.gameObject.GetComponent<Renderer>().material = defaultMaterial;
                         DefaultMaterials.Add(child.name, child.gameObject.GetComponent<Renderer>().material);
                         DefaultMaterial = child.GetComponent<Renderer>().material;
-                        if (visual == VisualModel1)
+
+                        if (VisualModel == VisualModel1)
                         {
                             child.gameObject.layer = LayerMask.NameToLayer("Model1");
                         }
@@ -318,13 +620,31 @@ public class UserInput_Dual : MonoBehaviour
                         {
                             child.gameObject.layer = LayerMask.NameToLayer("Model2");
                         }
+
+                        GameObject toggleGO = Instantiate(TogglePrefab, ToggleListParent);
+                        Toggle toggle = toggleGO.GetComponent<Toggle>();
+                        Text label = toggleGO.GetComponentInChildren<Text>();
+                        foreach(ModelPart part in ModelData.Parts)
+                        {
+                            if (part.PartName == child.name)
+                            {
+                                label.text = part.DisplayName;
+                                toggle.isOn = true;
+                            }
+                        }
+
+                        var thisChild = child;
+                        toggle.onValueChanged.AddListener((bool isOn) =>
+                        {
+                            thisChild.gameObject.SetActive(isOn);
+                        });
                     }
                 }
             }
 
             // Calculate combined bounds
-            Bounds combinedBounds = new Bounds(visual.transform.position, Vector3.zero);
-            Renderer[] renderers = visual.GetComponentsInChildren<Renderer>();
+            Bounds combinedBounds = new Bounds(VisualModel.transform.position, Vector3.zero);
+            Renderer[] renderers = VisualModel.GetComponentsInChildren<Renderer>();
 
             if (renderers.Length > 0)
             {
@@ -339,16 +659,17 @@ public class UserInput_Dual : MonoBehaviour
             float largestDimension = Mathf.Max(combinedBounds.size.x, Mathf.Max(combinedBounds.size.y, combinedBounds.size.z));
 
             // Calculate scale factor
-            float scaleFactor = targetSize / largestDimension;
+            // Debug.Log(ModelData.BiologicalScaleMM);
+            scaleFactor = targetSize / (largestDimension * ModelData.BiologicalScaleMM);
 
             // Apply scale to root transform
-            visual.transform.localScale *= scaleFactor;
+            VisualModel.transform.localScale *= scaleFactor;
             //uiScript.referenceLengthInMeters /= scaleFactor;
 
             Debug.Log($"Scaled model by {scaleFactor} to fit within {targetSize} unit bounding box.");
 
             Debug.Log(ModelData.OrientationVector[0] + " " + ModelData.OrientationVector[1] + " " + ModelData.OrientationVector[2]);
-            visual.transform.localEulerAngles = new Vector3(ModelData.OrientationVector[0], ModelData.OrientationVector[1], ModelData.OrientationVector[2]);
+            VisualModel.transform.localEulerAngles = new Vector3(ModelData.OrientationVector[0], ModelData.OrientationVector[1], ModelData.OrientationVector[2]);
 
             if (SceneManager.GetActiveScene().name.Contains("Taxon"))
             {
@@ -359,9 +680,16 @@ public class UserInput_Dual : MonoBehaviour
                 SetColors();
             }
 
+            float value = Mathf.Round(Zoom * scaleFactor * 10.0f) * 0.1f;
+            scaleValue.text = value.ToString()  + "mm";
+
             VideoPlayer.SetActive(false);
             uiScript.enabled = true;
             UpdateCurrentMaterials();
+        }
+        else
+        {
+            Debug.Log("Could not import");
         }
     }
 
