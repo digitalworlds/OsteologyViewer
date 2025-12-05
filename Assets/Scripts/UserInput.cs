@@ -101,7 +101,7 @@ public class UserInput : MonoBehaviour
 
         scaleValue = GameObject.Find("ScaleValue").GetComponent<TextMeshProUGUI>();
 
-        StartCoroutine(LoadModel(URL));
+        //StartCoroutine(LoadModel(URL));
         selectedPart = null;
 
         //Tip = GameObject.Find("Tip");
