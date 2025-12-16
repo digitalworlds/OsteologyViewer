@@ -4194,7 +4194,7 @@ MonoBehaviour:
   movementSpeed: 0.2
   defaultZoom: 4
   Name: Model Name
-  URL: https://digitalworlds.github.io/SkeletalGrowthDB/Models/AotusModels/Aotus107_Colors.json
+  URL: https://digitalworlds.github.io/SkeletalGrowthDB/Models/AotusModels/Aotus107_Taxon_v3.json
   targetSize: 6
   scaleFactor: 0
   SelectedMaterial: {fileID: 2100000, guid: e9d0a1b64e508cb42941915dded674c9, type: 2}
@@ -5334,7 +5334,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1583578825}
   m_Direction: 0
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.9999999
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
