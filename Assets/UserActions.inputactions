@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "name": "Input",
+    "name": "UserActions",
     "maps": [
         {
             "name": "Input",
@@ -58,7 +58,7 @@
                 {
                     "name": "",
                     "id": "41efea97-d819-4507-8c4e-43c35d7d6fba",
-                    "path": "<Pointer>/delta",
+                    "path": "<Pointer>/position",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -69,7 +69,7 @@
                 {
                     "name": "",
                     "id": "31bdf9de-5010-45a1-9f27-f5a02d22d30e",
-                    "path": "<Mouse>/scroll/y",
+                    "path": "<Mouse>/scroll",
                     "interactions": "",
                     "processors": "",
                     "groups": "",

@@ -6,7 +6,6 @@ using UnityEngine.UI;
 public class UIScript : MonoBehaviour
 {
     public UserInput UserInput;
-    public Slider opacitySlider; // Slider for opacity adjustment
     private TextMeshProUGUI titleText; 
 
     public RectTransform scaleBarUI; // The visual bar (e.g., a black line)
@@ -23,17 +22,12 @@ public class UIScript : MonoBehaviour
     
     public void Start()
     {
-        //opacitySlider = GameObject.Find("Opacity").GetComponent<Slider>();
-
-        // animator = GameObject.Find("SideMenu").GetComponent<Animator>();
-        // animator2 = GameObject.Find("LeftSideMenu").GetComponent<Animator>();
         titleText = GameObject.Find("Title").GetComponent<TextMeshProUGUI>();
 
         scaleBarUI = GameObject.Find("Scale").GetComponent<RectTransform>();
         scaleLabel = GameObject.Find("ScaleValue").GetComponent<TextMeshProUGUI>();
         orthoCamera = Camera.main;
 
-        
         menu = false;
     }
 
@@ -42,7 +36,6 @@ public class UIScript : MonoBehaviour
         if(UserInput)
             titleText.text = UserInput.Name;
 
-        ChangeOpacity();
         UpdateScaleBar();
     }
 
@@ -59,21 +52,6 @@ public class UIScript : MonoBehaviour
     public void ResetView()
     {
         UserInput.ResetView();
-    }
-
-    public void ChangeOpacity()
-    {
-        GameObject currentPart = UserInput.GetCurrentPart();
-        if (currentPart != null)
-        {
-            Renderer modelRenderer = currentPart.GetComponentInChildren<Renderer>();
-
-            bool isVisible = opacitySlider.value >= 0.5f;
-            modelRenderer.enabled = isVisible;
-
-            // Update visibility state in the dictionary
-            OffOn[currentPart] = isVisible;
-        }
     }
 
     public void SelectMenuButton()

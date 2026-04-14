@@ -61,6 +61,9 @@ public class UserInput : MonoBehaviour
   public GameObject TogglePrefab; // assign in Inspector
   public Transform ToggleListParent; // the VerticalLayoutGroup parent
 
+  [SerializeField] private GameObject CVisualsButton;
+  [SerializeField] private GameObject DVisualsButton;
+
   void OnEnable()
   {
     EnhancedTouchSupport.Enable();
@@ -105,91 +108,17 @@ public class UserInput : MonoBehaviour
 
     scaleValue = GameObject.Find("ScaleValue").GetComponent<TextMeshProUGUI>();
 
-    //StartCoroutine(LoadModel(URL));
+    StartCoroutine(LoadModel(URL));
     selectedPart = null;
-
-    //Tip = GameObject.Find("Tip");
 
     uiScript = GameObject.Find("OverlayUI").GetComponent<UIScript>();
   }
+  
   void Update()
   {
-    // if (Touch.activeTouches.Count >= 2)
-    // {
-    //     var t0 = Touch.activeTouches[0];
-    //     var t1 = Touch.activeTouches[1];
-
-    //     float currentDistance = Vector2.Distance(t0.screenPosition, t1.screenPosition);
-    //     float prevDistance = Vector2.Distance(
-    //         t0.screenPosition - t0.delta,
-    //         t1.screenPosition - t1.delta
-    //     );
-
-    //     float pinchDelta = currentDistance - prevDistance;
-
-    //     ZoomModel(pinchDelta * 0.01f);
-    // }
-
     HandleMouseInput();
     HandleTouchInput();
   }
-  // public void Update()
-  // {
-  //     // Check for mouse button presses and handle movement/rotation
-  //     if (Input.GetMouseButtonDown(1)) // Right mouse button
-  //     {
-  //         isRightClickPressed = true;
-  //         lastMousePosition = Input.mousePosition;
-  //         Cursor.visible = false;
-  //     }
-
-  //     if (Input.GetMouseButtonUp(1)) // Right mouse button released
-  //     {
-  //         isRightClickPressed = false;
-  //         Cursor.visible = true;
-  //     }
-
-  //     if (Input.GetMouseButtonDown(2)) // Middle mouse button
-  //     {
-  //         isMiddleClickPressed = true;
-  //         lastMousePosition = Input.mousePosition;
-  //         Cursor.visible = false;
-  //     }
-
-  //     if (Input.GetMouseButtonUp(2)) // Middle mouse button released
-  //     {
-  //         isMiddleClickPressed = false;
-  //         Cursor.visible = true;
-  //     }
-
-  //     if (Input.GetMouseButtonDown(0)) // Left mouse button
-  //     {
-  //         SelectPart();
-  //     }
-
-  //     // Zoom in/out
-  //     float scrollInput = Input.GetAxis("Mouse ScrollWheel"); // Get scroll input
-  //     if (scrollInput > 0f && Zoom > 0f)
-  //     {
-  //         ZoomIn();
-  //     }
-  //     else if (scrollInput < 0f && Zoom < 10f)
-  //     {
-  //         ZoomOut();
-  //     }
-
-  //     // If right mouse is held down, rotate the VisualModel
-  //     if (isRightClickPressed)
-  //     {
-  //         RotateModel();
-  //     }
-
-  //     // If middle mouse is held down, move the VisualModel
-  //     if (isMiddleClickPressed)
-  //     {
-  //         MoveModel();
-  //     }
-  // }
 
   void HandleMouseInput()
   {
@@ -340,38 +269,6 @@ public class UserInput : MonoBehaviour
     scaleValue.text = value.ToString() + "mm";
   }
 
-  // void RotateModel()
-  // {
-  //     // Get the difference between the current and last mouse position
-  //     Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
-
-  //     // Calculate rotation based on mouse movement
-  //     float rotX = mouseDelta.x * rotationSpeed * Time.deltaTime;
-  //     float rotY = mouseDelta.y * rotationSpeed * Time.deltaTime;
-
-  //     // Rotate the VisualModel around the X and Y axes
-  //     VisualModel.transform.Rotate(Vector3.up, -rotX, Space.World); // Rotate around Y axis (horizontal mouse movement)
-  //     VisualModel.transform.Rotate(Vector3.right, rotY, Space.World); // Rotate around X axis (vertical mouse movement)
-
-  //     // Update last mouse position for the next frame
-  //     lastMousePosition = Input.mousePosition;
-  // }
-
-  // void MoveModel()
-  // {
-  //     // Get mouse movement in screen space and translate the object accordingly
-  //     Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
-
-  //     // Convert the mouse movement into world space (movement in 3D)
-  //     Vector3 movement = new Vector3(mouseDelta.x, mouseDelta.y, 0) * (movementSpeed * Zoom) * Time.deltaTime;
-
-  //     // Move the VisualModel (here the movement is applied in local space)
-  //     VisualModel.transform.Translate(movement, Space.World);
-
-  //     // Update last mouse position for next frame
-  //     lastMousePosition = Input.mousePosition;
-  // }
-
   public void ResetView()
   {
     // Reset the camera's orthographic size to the default zoom
@@ -392,7 +289,6 @@ public class UserInput : MonoBehaviour
 
   public IEnumerator LoadModel(string JsonURL)
   {
-    // First, load the JSON metadata
     UnityWebRequest jsonRequest = UnityWebRequest.Get(JsonURL);
     yield return jsonRequest.SendWebRequest();
 
@@ -409,14 +305,6 @@ public class UserInput : MonoBehaviour
           ModelData.Orientation[1],
           ModelData.Orientation[2]
       );
-
-      // foreach(ModelPart part in ModelData.Parts)
-      // {
-      //     Debug.Log("Part Name: " + part.PartName);
-      //     Debug.Log("Diplay Name: " + part.DisplayName);
-      //     Debug.Log("Part Description: " + part.PartDescription);
-      // }
-      //Debug.Log(ModelData.URL);
 
       string url = JsonURL.Substring(0, JsonURL.LastIndexOf("/") + 1) + ModelData.URL;
       Debug.Log("Importing from: " + url);
@@ -438,7 +326,6 @@ public class UserInput : MonoBehaviour
       foreach (var kv in wrapper.ColorDictionary)
       {
         colorDictionary[kv.key] = kv.value;
-        //Debug.Log(kv.key + ", " + kv.value);
       }
     }
   }
@@ -450,8 +337,6 @@ public class UserInput : MonoBehaviour
     await gltfImport.Load(ModelURL);
     var instantiator = new GameObjectInstantiator(gltfImport, VisualModel.transform);
     var success = await gltfImport.InstantiateMainSceneAsync(instantiator);
-
-    Debug.Log("here");
 
     if (success)
     {
@@ -522,21 +407,11 @@ public class UserInput : MonoBehaviour
 
       // Apply scale to root transform
       VisualModel.transform.localScale *= scaleFactor;
-      //uiScript.referenceLengthInMeters /= scaleFactor;
 
       Debug.Log($"Scaled model by {scaleFactor} to fit within {targetSize} unit bounding box.");
 
       Debug.Log(ModelData.OrientationVector[0] + " " + ModelData.OrientationVector[1] + " " + ModelData.OrientationVector[2]);
       VisualModel.transform.localEulerAngles = new Vector3(ModelData.OrientationVector[0], ModelData.OrientationVector[1], ModelData.OrientationVector[2]);
-
-      if (SceneManager.GetActiveScene().name.Contains("Taxon"))
-      {
-        SetBoneAndTeeth();
-      }
-      else if (SceneManager.GetActiveScene().name.Contains("Tooth"))
-      {
-        SetColors();
-      }
 
       float value = Mathf.Round(Zoom * scaleFactor * 10.0f) * 0.1f;
       scaleValue.text = value.ToString() + "mm";
@@ -553,34 +428,21 @@ public class UserInput : MonoBehaviour
 
   void SelectPart()
   {
-    // Step 1: Get the mouse position on screen
-    Vector3 mousePosition = Input.mousePosition;
+    Ray ray = Camera.GetComponent<Camera>().ScreenPointToRay(Mouse.current.position.ReadValue());
 
-    // Step 2: Convert mouse position to a ray from the camera to the world space
-    Ray ray = Camera.GetComponent<Camera>().ScreenPointToRay(mousePosition);
-
-    // Step 3: Perform the raycast
     RaycastHit hit;
     if (Physics.Raycast(ray, out hit, Mathf.Infinity))
     {
-      // Step 4: If we hit something, output the name of the object
       GameObject hitObject = hit.collider.gameObject;
 
-      // if (selectedPart != null && selectedPart == hitObject)
-      // {
-      //     // Deselect the part if it's already selected
-      //     if (selectedPart.GetComponent<Renderer>().material == SelectedMaterial)
-      //     {
-      //         // Use DefaultMaterials dictionary to revert the material
-      //         selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
-      //         selectedPart = null;
-      //         // Reset the slider when nothing is selected
-      //         uiScript.opacitySlider.value = 1f; // Reset slider to default value (fully opaque)
-      //     }
-      // }
-      // else
-      // {
-      // Deselect the previous part if there's one selected
+      if (selectedPart == hitObject)
+      {
+        selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
+        selectedPart = null;
+        UpdateSideMenu();
+        return;
+      }
+
       if (selectedPart != null)
       {
         selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
@@ -588,47 +450,38 @@ public class UserInput : MonoBehaviour
 
       selectedPart = hitObject;
       selectedPart.GetComponent<Renderer>().material = SelectedMaterial;
-
-      // Update the slider value based on the opacity dictionary (if exists)
-      if (uiScript.Opacities.ContainsKey(selectedPart))
-      {
-        // Apply the stored opacity for the selected part
-        uiScript.opacitySlider.value = uiScript.Opacities[selectedPart];
-      }
-      else
-      {
-        // If no opacity is stored yet, default it to 1 (fully opaque)
-        uiScript.opacitySlider.value = 1f;
-      }
-      //}
-      UpdateSideMenuAndTip();
     }
     else
     {
-      // Deselect the previous part if there's one selected
+      // Deselect the previous part if there's one selected and a new one hasnt been selected
       if (selectedPart != null)
       {
         selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
-
-        GameObject SideMenu = GameObject.Find("SideMenu");
-        SideMenu.transform.Find("Part").GetComponent<TextMeshProUGUI>().text = "No Part Selected";
-        SideMenu.transform.Find("Details").GetComponent<TextMeshProUGUI>().text = "Click on a part to see more here!";
-        //Tip.transform.Find("BG").Find("Text").GetComponent<TextMeshProUGUI>().text = "No Part Selected";
+        selectedPart = null;
       }
     }
+
+    UpdateSideMenu();
   }
 
-  public void UpdateSideMenuAndTip()
+  public void UpdateSideMenu()
   {
     GameObject SideMenu = GameObject.Find("SideMenu");
-    foreach (ModelPart i in ModelData.Parts)
+    if(selectedPart != null)
     {
-      if (selectedPart.name.Contains(i.PartName))
+      foreach (ModelPart i in ModelData.Parts)
       {
-        SideMenu.transform.Find("Part").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
-        SideMenu.transform.Find("Details").GetComponent<TextMeshProUGUI>().text = i.PartDescription;
-        //Tip.transform.Find("BG").Find("Text").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
+        if (selectedPart.name.Contains(i.PartName))
+        {
+          SideMenu.transform.Find("Part").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
+          SideMenu.transform.Find("Details").GetComponent<TextMeshProUGUI>().text = i.PartDescription;
+        }
       }
+    }
+    else
+    {
+      SideMenu.transform.Find("Part").GetComponent<TextMeshProUGUI>().text = "No Part Selected";
+      SideMenu.transform.Find("Details").GetComponent<TextMeshProUGUI>().text = "Click on a part to see more here!";
     }
   }
 
@@ -646,16 +499,19 @@ public class UserInput : MonoBehaviour
     }
   }
 
-  public void SetVisuals(GameObject text)
+  public void SetVisuals()
   {
+
     if (colorsOn)
     {
-      text.GetComponent<TextMeshProUGUI>().text = "C";
+      DVisualsButton.SetActive(false);
+      CVisualsButton.SetActive(true);
       SetDefault();
     }
     else
     {
-      text.GetComponent<TextMeshProUGUI>().text = "D";
+      CVisualsButton.SetActive(false);
+      DVisualsButton.SetActive(true);
       SetColors();
     }
   }
@@ -670,7 +526,6 @@ public class UserInput : MonoBehaviour
     }
 
     selectedPart = null;
-    uiScript.opacitySlider.wholeNumbers = true;
 
     UpdateCurrentMaterials();
   }
@@ -721,7 +576,6 @@ public class UserInput : MonoBehaviour
     }
 
     selectedPart = null;
-    uiScript.opacitySlider.wholeNumbers = true;
 
     UpdateCurrentMaterials();
   }
@@ -756,44 +610,44 @@ public class UserInput : MonoBehaviour
     UpdateCurrentMaterials();
   }
 
-  public void HideMandible()
-  {
-    foreach (Transform child in VisualModel.transform.GetChild(0))
-    {
-      foreach (ModelPart i in ModelData.Parts)
-      {
-        if (child.name.Contains(i.PartName) && i.PartName.Contains("Mandible"))
-        {
-          if (child.gameObject.activeSelf)
-          {
-            child.gameObject.SetActive(false);
-          }
-          else
-          {
-            child.gameObject.SetActive(true);
-          }
-        }
-      }
-    }
-  }
-  public void HideCranialVault()
-  {
-    foreach (Transform child in VisualModel.transform.GetChild(0))
-    {
-      foreach (ModelPart i in ModelData.Parts)
-      {
-        if (child.name.Contains(i.PartName) && child.name.Contains("Calotte"))
-        {
-          if (child.gameObject.activeSelf)
-          {
-            child.gameObject.SetActive(false);
-          }
-          else
-          {
-            child.gameObject.SetActive(true);
-          }
-        }
-      }
-    }
-  }
+  // public void HideMandible()
+  // {
+  //   foreach (Transform child in VisualModel.transform.GetChild(0))
+  //   {
+  //     foreach (ModelPart i in ModelData.Parts)
+  //     {
+  //       if (child.name.Contains(i.PartName) && i.PartName.Contains("Mandible"))
+  //       {
+  //         if (child.gameObject.activeSelf)
+  //         {
+  //           child.gameObject.SetActive(false);
+  //         }
+  //         else
+  //         {
+  //           child.gameObject.SetActive(true);
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+  // public void HideCranialVault()
+  // {
+  //   foreach (Transform child in VisualModel.transform.GetChild(0))
+  //   {
+  //     foreach (ModelPart i in ModelData.Parts)
+  //     {
+  //       if (child.name.Contains(i.PartName) && child.name.Contains("Calotte"))
+  //       {
+  //         if (child.gameObject.activeSelf)
+  //         {
+  //           child.gameObject.SetActive(false);
+  //         }
+  //         else
+  //         {
+  //           child.gameObject.SetActive(true);
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
 }

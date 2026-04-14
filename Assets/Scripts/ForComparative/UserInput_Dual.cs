@@ -56,21 +56,28 @@ public class UserInput_Dual : MonoBehaviour
     private GameObject selectedPart;
     private GameObject Tip;
 
-    private UIScript_Dual uiScript;
+    [SerializeField] private UIScript_Dual uiScript1;
+     [SerializeField] private UIScript_Dual uiScript2;
     private TextMeshProUGUI scaleValue;
 
-    private Model ModelData;
+    private Model ModelData1;
+    private Model ModelData2;
 
     public GameObject VideoPlayer;
 
-    //Toggle List
-    public GameObject TogglePrefab; // assign in Inspector
-    public Transform ToggleListParent; // the VerticalLayoutGroup parent
+    public GameObject TogglePrefab;
+    [SerializeField] public Transform ToggleListParent1; // the VerticalLayoutGroup parent
+    [SerializeField] public Transform ToggleListParent2;
+
+    [SerializeField] private GameObject CVisualsButton1;
+    [SerializeField] private GameObject DVisualsButton1;
+    [SerializeField] private GameObject CVisualsButton2;
+    [SerializeField] private GameObject DVisualsButton2;
 
     public void LoadFromHTML(string url1, string url2)
     {
-        StartCoroutine(LoadModel(url1, VisualModel1));
-        StartCoroutine(LoadModel(url2, VisualModel1));
+        StartCoroutine(LoadModel(url1, VisualModel1,ToggleListParent1));
+        StartCoroutine(LoadModel(url2, VisualModel2, ToggleListParent2));
         Name1 = "Loading...";
         Name2 = "Loading...";
     }
@@ -101,11 +108,6 @@ public class UserInput_Dual : MonoBehaviour
 
     public void Start()
     {
-        // foreach (Transform child in ToggleListParent)
-        // {
-        //     Destroy(child.gameObject);
-        // }
-
         Name1 = "Loading...";
         Name2 = "Loading...";
         Zoom = defaultZoom;
@@ -121,106 +123,19 @@ public class UserInput_Dual : MonoBehaviour
 
         scaleValue = GameObject.Find("ScaleValue").GetComponent<TextMeshProUGUI>();
 
-        StartCoroutine(LoadModel(Model1URL, VisualModel1));
-        StartCoroutine(LoadModel(Model2URL, VisualModel2));
+        StartCoroutine(LoadModel(Model1URL, VisualModel1,ToggleListParent1));
+        StartCoroutine(LoadModel(Model2URL, VisualModel2, ToggleListParent2));
         selectedPart = null;
-
-        Tip = GameObject.Find("Tip");
-
-        uiScript = GameObject.Find("OverlayUI").GetComponent<UIScript_Dual>();
     }
 
     void Update()
     {
-        // if (Touch.activeTouches.Count >= 2)
-        // {
-        //     var t0 = Touch.activeTouches[0];
-        //     var t1 = Touch.activeTouches[1];
-
-        //     float currentDistance = Vector2.Distance(t0.screenPosition, t1.screenPosition);
-        //     float prevDistance = Vector2.Distance(
-        //         t0.screenPosition - t0.delta,
-        //         t1.screenPosition - t1.delta
-        //     );
-
-        //     float pinchDelta = currentDistance - prevDistance;
-
-        //     ZoomModel(pinchDelta * 0.01f);
-        // }
-    
         HandleMouseInput();
         HandleTouchInput();
+
+        uiScript1.titleText.text = Name1;
+        uiScript2.titleText.text = Name2;
     }
-
-    // public void Update()
-    // {
-    //     // Turn on tooltip
-    //     if (selectedPart != null)
-    //     {
-    //         foreach (ModelPart i in ModelData.Parts)
-    //         {
-    //             if(selectedPart.name.Contains(i.PartName))
-    //             {
-    //                 Tip.transform.Find("BG").Find("Text").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
-    //             }
-    //         }
-    //     }
-
-    //     // Check for mouse button presses and handle movement/rotation
-    //     if (Input.GetMouseButtonDown(1)) // Right mouse button
-    //     {
-    //         isRightClickPressed = true;
-    //         lastMousePosition = Input.mousePosition;
-    //         Cursor.visible = false;
-    //     }
-
-    //     if (Input.GetMouseButtonUp(1)) // Right mouse button released
-    //     {
-    //         isRightClickPressed = false;
-    //         Cursor.visible = true;
-    //     }
-
-    //     if (Input.GetMouseButtonDown(2)) // Middle mouse button
-    //     {
-    //         isMiddleClickPressed = true;
-    //         lastMousePosition = Input.mousePosition;
-    //         Cursor.visible = false;
-    //     }
-
-    //     if (Input.GetMouseButtonUp(2)) // Middle mouse button released
-    //     {
-    //         isMiddleClickPressed = false;
-    //         Cursor.visible = true;
-    //     }
-
-    //     if (Input.GetMouseButtonDown(0)) // Left mouse button
-    //     {
-    //         SelectPart();
-    //     }
-
-    //     // Zoom in/out
-    //     float scrollInput = Input.GetAxis("Mouse ScrollWheel"); // Get scroll input
-    //     if (scrollInput > 0f && Zoom > 0f)
-    //     {
-    //         ZoomIn();
-    //     }
-    //     else if (scrollInput < 0f && Zoom < 10f)
-    //     {
-    //         ZoomOut();
-    //     }
-
-    //     // If right mouse is held down, rotate the VisualModel
-    //     if (isRightClickPressed)
-    //     {
-    //         RotateModel();
-    //     }
-
-    //     // If middle mouse is held down, move the VisualModel
-    //     if (isMiddleClickPressed)
-    //     {
-    //         MoveModel();
-    //     }
-    // }
 
     void HandleMouseInput()
     {
@@ -377,42 +292,6 @@ public class UserInput_Dual : MonoBehaviour
         scaleValue.text = Zoom.ToString() + "mm";
     }
 
-    // void RotateModel()
-    // {
-    //     // Get the difference between the current and last mouse position
-    //     Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
-
-    //     // Calculate rotation based on mouse movement
-    //     float rotX = mouseDelta.x * rotationSpeed * Time.deltaTime;
-    //     float rotY = mouseDelta.y * rotationSpeed * Time.deltaTime;
-
-    //     // Rotate the VisualModel around the X and Y axes
-    //     VisualModel1.transform.Rotate(Vector3.up, -rotX, Space.World); // Rotate around Y axis (horizontal mouse movement)
-    //     VisualModel1.transform.Rotate(Vector3.right, rotY, Space.World); // Rotate around X axis (vertical mouse movement)
-
-    //     VisualModel2.transform.Rotate(Vector3.up, -rotX, Space.World); // Rotate around Y axis (horizontal mouse movement)
-    //     VisualModel2.transform.Rotate(Vector3.right, rotY, Space.World); // Rotate around X axis (vertical mouse movement)
-
-    //     // Update last mouse position for the next frame
-    //     lastMousePosition = Input.mousePosition;
-    // }
-
-    // void MoveModel()
-    // {
-    //     // Get mouse movement in screen space and translate the object accordingly
-    //     Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
-
-    //     // Convert the mouse movement into world space (movement in 3D)
-    //     Vector3 movement = new Vector3(mouseDelta.x, mouseDelta.y, 0) * (movementSpeed * Zoom) * Time.deltaTime;
-
-    //     // Move the VisualModel (here the movement is applied in local space)
-    //     VisualModel1.transform.Translate(movement, Space.World);
-    //     VisualModel2.transform.Translate(movement, Space.World);
-
-    //     // Update last mouse position for next frame
-    //     lastMousePosition = Input.mousePosition;
-    // }
-
     public void ResetView()
     {
         // Reset the camera's orthographic size to the default zoom
@@ -437,47 +316,6 @@ public class UserInput_Dual : MonoBehaviour
     {
         return selectedPart;
     }
-    
-    public IEnumerator LoadModel(string JsonURL, GameObject visual)
-    {
-        // First, load the JSON metadata
-        UnityWebRequest jsonRequest = UnityWebRequest.Get(JsonURL);
-        yield return jsonRequest.SendWebRequest();
-
-        if (jsonRequest.result == UnityWebRequest.Result.Success)
-        {
-            string json = jsonRequest.downloadHandler.text;
-            ModelData = JsonUtility.FromJson<Model>(json);
-
-            if (visual == VisualModel1)
-            {
-                Name1 = ModelData.ModelName;
-            }
-            else
-            {
-                Name2 = ModelData.ModelName;
-            }
-            
-            Debug.Log(ModelData.Orientation);
-
-            ModelData.OrientationVector = new Vector3(
-                ModelData.Orientation[0],
-                ModelData.Orientation[1],
-                ModelData.Orientation[2]
-            );
-
-            // foreach(ModelPart part in ModelData.Parts)
-            // {
-            //     Debug.Log("Part Name: " + part.PartName);
-            //     Debug.Log("Diplay Name: " + part.DisplayName);
-            //     Debug.Log("Part Description: " + part.PartDescription);
-            // }
-            //Debug.Log(ModelData.URL);
-            string url = JsonURL.Substring(0, JsonURL.LastIndexOf("/") + 1) + ModelData.URL;
-            ImportModel(url, visual);
-            StartCoroutine(LoadColorDictionary(ColorDictionaryURL));
-        }
-    }
 
     public IEnumerator LoadColorDictionary(string colorDictionaryURL)
     {
@@ -497,134 +335,117 @@ public class UserInput_Dual : MonoBehaviour
         }
     }
 
-    // async void ImportModel(string ModelURL, GameObject visual)
-    // {
-    //     var gltfImport = new GltfImport();
-    //     await gltfImport.Load(ModelURL);
-    //     var instantiator = new GameObjectInstantiator(gltfImport, visual.transform);
-    //     var success = await gltfImport.InstantiateMainSceneAsync(instantiator);
-
-    //     if (success)
-    //     {
-    //         Debug.Log("GLTF file is loaded.");
-
-    //         visual.transform.localScale /= 5;
-
-    //         foreach (Transform child in visual.transform.GetChild(0))
-    //         {
-    //             // Add a MeshCollider to the child if it has a MeshFilter (which indicates it has a mesh)
-    //             MeshFilter meshFilter = child.GetComponent<MeshFilter>();
-    //             if (meshFilter != null)
-    //             {
-    //                 // Ensure the child doesn't already have a MeshCollider
-    //                 if (child.GetComponent<MeshCollider>() == null)
-    //                 {
-    //                     // Add a MeshCollider to the child
-    //                     child.gameObject.AddComponent<MeshCollider>();
-    //                     DefaultMaterials.Add(child.name, child.gameObject.GetComponent<Renderer>().material);
-    //                     DefaultMaterial = child.GetComponent<Renderer>().material;
-    //                     if (visual == VisualModel1)
-    //                     {
-    //                         child.gameObject.layer = LayerMask.NameToLayer("Model1");
-    //                     }
-    //                     else
-    //                     {
-    //                         child.gameObject.layer = LayerMask.NameToLayer("Model2");
-    //                     }
-    //                 }
-    //             }
-    //         }
-
-    //         // Calculate combined bounds
-    //         Bounds combinedBounds = new Bounds(visual.transform.position, Vector3.zero);
-    //         Renderer[] renderers = visual.GetComponentsInChildren<Renderer>();
-
-    //         if (renderers.Length > 0)
-    //         {
-    //             combinedBounds = renderers[0].bounds;
-    //             foreach (Renderer renderer in renderers)
-    //             {
-    //                 combinedBounds.Encapsulate(renderer.bounds);
-    //             }
-    //         }
-
-    //         // Find the largest dimension
-    //         float largestDimension = Mathf.Max(combinedBounds.size.x, Mathf.Max(combinedBounds.size.y, combinedBounds.size.z));
-
-    //         // Calculate scale factor
-    //         float scaleFactor = targetSize / largestDimension;
-
-    //         // Apply scale to root transform
-    //         visual.transform.localScale *= scaleFactor;
-    //         //uiScript.referenceLengthInMeters /= scaleFactor;
-
-    //         Debug.Log($"Scaled model by {scaleFactor} to fit within {targetSize} unit bounding box.");
-
-    //         Debug.Log(ModelData.OrientationVector[0] + " " + ModelData.OrientationVector[1] + " " + ModelData.OrientationVector[2]);
-    //         visual.transform.localEulerAngles = new Vector3(ModelData.OrientationVector[0], ModelData.OrientationVector[1], ModelData.OrientationVector[2]);
-
-    //         if (SceneManager.GetActiveScene().name.Contains("Taxon"))
-    //         {
-    //             SetBoneAndTeeth();
-    //         }
-    //         else if (SceneManager.GetActiveScene().name.Contains("Tooth"))
-    //         {
-    //             SetColors();
-    //         }
-
-    //         VideoPlayer.SetActive(false);
-    //         uiScript.enabled = true;
-    //         UpdateCurrentMaterials();
-    //     }
-    // }
-
-    async void ImportModel(string ModelURL, GameObject VisualModel)
+    public IEnumerator LoadModel(string JsonURL, GameObject visual, Transform ToggleListParent)
     {
-        Debug.Log("Importing");
+        // First, load the JSON metadata
+        UnityWebRequest jsonRequest = UnityWebRequest.Get(JsonURL);
+        yield return jsonRequest.SendWebRequest();
+
+        if (jsonRequest.result == UnityWebRequest.Result.Success)
+        {
+            string url;
+            if (visual == VisualModel1)
+            {
+                string json = jsonRequest.downloadHandler.text;
+                ModelData1 = JsonUtility.FromJson<Model>(json);
+                Name1 = ModelData1.ModelName;
+
+                
+                //Debug.Log(ModelData.Orientation);
+
+                ModelData1.OrientationVector = new Vector3(
+                    ModelData1.Orientation[0],
+                    ModelData1.Orientation[1],
+                    ModelData1.Orientation[2]
+                );
+
+                // foreach(ModelPart part in ModelData.Parts)
+                // {
+                //     Debug.Log("Part Name: " + part.PartName);
+                //     Debug.Log("Diplay Name: " + part.DisplayName);
+                //     Debug.Log("Part Description: " + part.PartDescription);
+                // }
+                //Debug.Log(ModelData.URL);
+                url = JsonURL.Substring(0, JsonURL.LastIndexOf("/") + 1) + ModelData1.URL;
+            }
+            else
+            {
+                string json = jsonRequest.downloadHandler.text;
+                ModelData2 = JsonUtility.FromJson<Model>(json);
+                Name2 = ModelData2.ModelName;
+                
+                //Debug.Log(ModelData.Orientation);
+
+                ModelData2.OrientationVector = new Vector3(
+                    ModelData2.Orientation[0],
+                    ModelData2.Orientation[1],
+                    ModelData2.Orientation[2]
+                );
+
+                // foreach(ModelPart part in ModelData.Parts)
+                // {
+                //     Debug.Log("Part Name: " + part.PartName);
+                //     Debug.Log("Diplay Name: " + part.DisplayName);
+                //     Debug.Log("Part Description: " + part.PartDescription);
+                // }
+                //Debug.Log(ModelData.URL);
+                url = JsonURL.Substring(0, JsonURL.LastIndexOf("/") + 1) + ModelData2.URL;
+            }
+            ImportModel(url, visual, ToggleListParent);
+            StartCoroutine(LoadColorDictionary(ColorDictionaryURL));
+        }
+    }
+
+    async void ImportModel(string ModelURL, GameObject visual, Transform ToggleListParent)
+    {
+        //Debug.Log("Importing");
         var gltfImport = new GltfImport();
         await gltfImport.Load(ModelURL);
-        var instantiator = new GameObjectInstantiator(gltfImport, VisualModel.transform);
+        var instantiator = new GameObjectInstantiator(gltfImport, visual.transform);
         var success = await gltfImport.InstantiateMainSceneAsync(instantiator);
-        
+
         if (success)
         {
-            // foreach (Transform child in ToggleListParent)
-            // {
-            //     Destroy(child.gameObject);
-            // }
-            
-            Debug.Log("GLTF file is loaded.");
+            foreach (Transform child in ToggleListParent)
+            {
+                Destroy(child.gameObject);
+            }
 
-            VisualModel.transform.localScale /= 5;
+            //Debug.Log("GLTF file is loaded.");
 
-            foreach (Transform child in VisualModel.transform.GetChild(0))
+            visual.transform.localScale /= 5;
+
+            foreach (Transform child in visual.transform.GetChild(0))
             {
                 // Add a MeshCollider to the child if it has a MeshFilter (which indicates it has a mesh)
                 MeshFilter meshFilter = child.GetComponent<MeshFilter>();
                 if (meshFilter != null)
                 {
-                    // Ensure the child doesn't already have a MeshCollider
-                    if (child.GetComponent<MeshCollider>() == null)
+                // Ensure the child doesn't already have a MeshCollider
+                if (child.GetComponent<MeshCollider>() == null)
+                {
+                    // Add a MeshCollider to the child
+                    child.gameObject.AddComponent<MeshCollider>();
+                    child.gameObject.GetComponent<Renderer>().material = defaultMaterial;
+                    DefaultMaterials.Add(child.name, child.gameObject.GetComponent<Renderer>().material);
+                    DefaultMaterial = child.GetComponent<Renderer>().material;
+                    
+                    if (visual == VisualModel1)
                     {
-                        // Add a MeshCollider to the child
-                        child.gameObject.AddComponent<MeshCollider>();
-                        child.gameObject.GetComponent<Renderer>().material = defaultMaterial;
-                        DefaultMaterials.Add(child.name, child.gameObject.GetComponent<Renderer>().material);
-                        DefaultMaterial = child.GetComponent<Renderer>().material;
+                        child.gameObject.layer = LayerMask.NameToLayer("Model1");
+                    }
+                    else
+                    {
+                        child.gameObject.layer = LayerMask.NameToLayer("Model2");
+                    }
 
-                        if (VisualModel == VisualModel1)
-                        {
-                            child.gameObject.layer = LayerMask.NameToLayer("Model1");
-                        }
-                        else
-                        {
-                            child.gameObject.layer = LayerMask.NameToLayer("Model2");
-                        }
+                    GameObject toggleGO = Instantiate(TogglePrefab, ToggleListParent);
+                    Toggle toggle = toggleGO.GetComponent<Toggle>();
+                    Text label = toggleGO.GetComponentInChildren<Text>();
 
-                        GameObject toggleGO = Instantiate(TogglePrefab, ToggleListParent);
-                        Toggle toggle = toggleGO.GetComponent<Toggle>();
-                        Text label = toggleGO.GetComponentInChildren<Text>();
-                        foreach(ModelPart part in ModelData.Parts)
+                    if (visual == VisualModel1)
+                    {   
+                        foreach (ModelPart part in ModelData1.Parts)
                         {
                             if (part.PartName == child.name)
                             {
@@ -632,26 +453,38 @@ public class UserInput_Dual : MonoBehaviour
                                 toggle.isOn = true;
                             }
                         }
-
-                        var thisChild = child;
-                        toggle.onValueChanged.AddListener((bool isOn) =>
+                    }
+                    else
+                    {
+                        foreach (ModelPart part in ModelData2.Parts)
                         {
-                            thisChild.gameObject.SetActive(isOn);
-                        });
+                            if (part.PartName == child.name)
+                            {
+                                label.text = part.DisplayName;
+                                toggle.isOn = true;
+                            }
+                        }
+                    }
+
+                    var thisChild = child;
+                    toggle.onValueChanged.AddListener((bool isOn) =>
+                    {
+                        thisChild.gameObject.SetActive(isOn);
+                    });
                     }
                 }
             }
 
             // Calculate combined bounds
-            Bounds combinedBounds = new Bounds(VisualModel.transform.position, Vector3.zero);
-            Renderer[] renderers = VisualModel.GetComponentsInChildren<Renderer>();
+            Bounds combinedBounds = new Bounds(visual.transform.position, Vector3.zero);
+            Renderer[] renderers = visual.GetComponentsInChildren<Renderer>();
 
             if (renderers.Length > 0)
             {
                 combinedBounds = renderers[0].bounds;
                 foreach (Renderer renderer in renderers)
                 {
-                    combinedBounds.Encapsulate(renderer.bounds);
+                combinedBounds.Encapsulate(renderer.bounds);
                 }
             }
 
@@ -659,32 +492,28 @@ public class UserInput_Dual : MonoBehaviour
             float largestDimension = Mathf.Max(combinedBounds.size.x, Mathf.Max(combinedBounds.size.y, combinedBounds.size.z));
 
             // Calculate scale factor
-            // Debug.Log(ModelData.BiologicalScaleMM);
-            scaleFactor = targetSize / (largestDimension * ModelData.BiologicalScaleMM);
-
-            // Apply scale to root transform
-            VisualModel.transform.localScale *= scaleFactor;
-            //uiScript.referenceLengthInMeters /= scaleFactor;
-
-            Debug.Log($"Scaled model by {scaleFactor} to fit within {targetSize} unit bounding box.");
-
-            Debug.Log(ModelData.OrientationVector[0] + " " + ModelData.OrientationVector[1] + " " + ModelData.OrientationVector[2]);
-            VisualModel.transform.localEulerAngles = new Vector3(ModelData.OrientationVector[0], ModelData.OrientationVector[1], ModelData.OrientationVector[2]);
-
-            if (SceneManager.GetActiveScene().name.Contains("Taxon"))
+            //Debug.Log(ModelData.BiologicalScaleMM);
+            if (visual == VisualModel1)
             {
-                SetBoneAndTeeth();
+                scaleFactor = targetSize / (largestDimension * ModelData1.BiologicalScaleMM);
+                visual.transform.localEulerAngles = new Vector3(ModelData1.OrientationVector[0], ModelData1.OrientationVector[1], ModelData1.OrientationVector[2]);
             }
-            else if (SceneManager.GetActiveScene().name.Contains("Tooth"))
+            else
             {
-                SetColors();
+                scaleFactor = targetSize / (largestDimension * ModelData2.BiologicalScaleMM);
+                visual.transform.localEulerAngles = new Vector3(ModelData2.OrientationVector[0], ModelData2.OrientationVector[1], ModelData2.OrientationVector[2]);
+
             }
+            visual.transform.localScale *= scaleFactor;
+
+            //Debug.Log($"Scaled model by {scaleFactor} to fit within {targetSize} unit bounding box.");
 
             float value = Mathf.Round(Zoom * scaleFactor * 10.0f) * 0.1f;
-            scaleValue.text = value.ToString()  + "mm";
+            scaleValue.text = value.ToString() + "mm";
 
             VideoPlayer.SetActive(false);
-            uiScript.enabled = true;
+            uiScript1.enabled = true;
+            uiScript2.enabled = true;
             UpdateCurrentMaterials();
         }
         else
@@ -695,70 +524,66 @@ public class UserInput_Dual : MonoBehaviour
 
     void SelectPart()
     {
-        // Step 1: Get the mouse position on screen
-        Vector3 mousePosition = Input.mousePosition;
+        LayerMask layerMask;
+        Ray ray;
 
-        // Step 2: Convert mouse position to a ray from the camera to the world space
-        Ray ray = Camera1.GetComponent<Camera>().ScreenPointToRay(mousePosition);
-
-        // Step 3: Perform the raycast
-        RaycastHit hit;
-        if (Physics.Raycast(ray, out hit, Mathf.Infinity))
+        if (Mouse.current.position.ReadValue().x < Screen.width / 2f)
         {
-            // Step 4: If we hit something, output the name of the object
+            layerMask = LayerMask.GetMask("Model1");
+            ray = CameraComponent1.ScreenPointToRay(Mouse.current.position.ReadValue());
+        }
+        else
+        {
+            layerMask = LayerMask.GetMask("Model2");
+            ray = CameraComponent2.ScreenPointToRay(Mouse.current.position.ReadValue());
+        }
+
+        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, layerMask))
+        {
             GameObject hitObject = hit.collider.gameObject;
 
-            if (selectedPart != null && selectedPart == hitObject)
+            if (selectedPart == hitObject)
             {
-                // Deselect the part if it's already selected
-                if (selectedPart.GetComponent<Renderer>().material == SelectedMaterial)
+                selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
+                selectedPart = null;
+                if(selectedPart.layer == LayerMask.NameToLayer("Model1"))
                 {
-                    // Use DefaultMaterials dictionary to revert the material
-                    selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
-                    selectedPart = null;
-                    // Reset the slider when nothing is selected
-                    uiScript.opacitySlider.value = 1f; // Reset slider to default value (fully opaque)
-                }
-            }
-            else
-            {
-                // Deselect the previous part if there's one selected
-                if (selectedPart != null)
-                {
-                    selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
-                }
-
-                selectedPart = hitObject;
-
-                selectedPart.GetComponent<Renderer>().material = SelectedMaterial;
-
-                // Update the slider value based on the opacity dictionary (if exists)
-                if (uiScript.Opacities.ContainsKey(selectedPart))
-                {
-                    // Apply the stored opacity for the selected part
-                    uiScript.opacitySlider.value = uiScript.Opacities[selectedPart];
+                    uiScript1.UpdateSideMenu(selectedPart, ModelData1);
                 }
                 else
                 {
-                    // If no opacity is stored yet, default it to 1 (fully opaque)
-                    uiScript.opacitySlider.value = 1f;
+                    uiScript2.UpdateSideMenu(selectedPart, ModelData2);
                 }
+                return;
             }
 
-            UpdateSideMenu();
-        }
-    }
-
-    public void UpdateSideMenu()
-    {
-        GameObject SideMenu = GameObject.Find("SideMenu");
-        foreach (ModelPart i in ModelData.Parts)
-        {
-            if(selectedPart.name.Contains(i.PartName))
+            if (selectedPart != null)
             {
-                SideMenu.transform.Find("Part").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
-                SideMenu.transform.Find("Details").GetComponent<TextMeshProUGUI>().text = i.PartDescription;
+                selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
             }
+
+            selectedPart = hitObject;
+            selectedPart.GetComponent<Renderer>().material = SelectedMaterial;
+        }
+        else
+        {
+            // Deselect the previous part if there's one selected and a new one hasnt been selected
+            if (selectedPart != null)
+            {
+                selectedPart.GetComponent<Renderer>().material = DefaultMaterials[selectedPart.name];
+                selectedPart = null;
+            }
+        }
+
+        if(selectedPart.layer == LayerMask.NameToLayer("Model1"))
+        {
+            Debug.Log("Left");
+            uiScript1.UpdateSideMenu(selectedPart, ModelData1);
+        }
+        else
+        {
+            Debug.Log("Right");
+            uiScript2.UpdateSideMenu(selectedPart, ModelData2);
         }
     }
 
@@ -787,17 +612,23 @@ public class UserInput_Dual : MonoBehaviour
         }
     }
 
-    public void SetVisuals(GameObject text)
+    public void SetVisuals()
     {
         if (colorsOn)
         {
+            DVisualsButton1.SetActive(false);
+            CVisualsButton1.SetActive(true);
+            DVisualsButton2.SetActive(false);
+            CVisualsButton2.SetActive(true);
             SetDefault();
-            text.GetComponent<TextMeshProUGUI>().text = "C";
         }
         else
         {
+            CVisualsButton1.SetActive(false);
+            DVisualsButton1.SetActive(true);
+            CVisualsButton2.SetActive(false);
+            DVisualsButton2.SetActive(true);
             SetColors();
-            text.GetComponent<TextMeshProUGUI>().text = "D";
         }
     }
     
@@ -817,7 +648,6 @@ public class UserInput_Dual : MonoBehaviour
         }
 
         selectedPart = null;
-        uiScript.opacitySlider.wholeNumbers = true;
 
         UpdateCurrentMaterials();
     }
@@ -910,7 +740,6 @@ public class UserInput_Dual : MonoBehaviour
         }
 
         selectedPart = null;
-        uiScript.opacitySlider.wholeNumbers = true;
 
         UpdateCurrentMaterials();
     }
@@ -967,80 +796,80 @@ public class UserInput_Dual : MonoBehaviour
         UpdateCurrentMaterials();
     }
 
-    public void HideMandible()
-    {
-        foreach (Transform child in VisualModel1.transform.GetChild(0))
-        {
-            foreach (ModelPart i in ModelData.Parts)
-            {
-                if (child.name.Contains(i.PartName) && i.PartName.Contains("Mandible"))
-                {
-                    if (child.gameObject.activeSelf)
-                    {
-                        child.gameObject.SetActive(false);
-                    }
-                    else
-                    {
-                        child.gameObject.SetActive(true);
-                    }
-                }
-            }
-        }
+    // public void HideMandible()
+    // {
+    //     foreach (Transform child in VisualModel1.transform.GetChild(0))
+    //     {
+    //         foreach (ModelPart i in ModelData1.Parts + ModelData2.Parts)
+    //         {
+    //             if (child.name.Contains(i.PartName) && i.PartName.Contains("Mandible"))
+    //             {
+    //                 if (child.gameObject.activeSelf)
+    //                 {
+    //                     child.gameObject.SetActive(false);
+    //                 }
+    //                 else
+    //                 {
+    //                     child.gameObject.SetActive(true);
+    //                 }
+    //             }
+    //         }
+    //     }
         
-        foreach(Transform child in VisualModel2.transform.GetChild(0))
-        {
-            foreach (ModelPart i in ModelData.Parts)
-            {
-                if(child.name.Contains(i.PartName) && i.PartName.Contains("Mandible"))
-                {
-                    if(child.gameObject.activeSelf)
-                    {
-                        child.gameObject.SetActive(false);
-                    }
-                    else
-                    {
-                        child.gameObject.SetActive(true);
-                    }
-                }
-            }
-        }
-    }
-    public void HideCranialVault()
-    {
-        foreach (Transform child in VisualModel1.transform.GetChild(0))
-        {
-            foreach (ModelPart i in ModelData.Parts)
-            {
-                if (child.name.Contains(i.PartName) && child.name.Contains("Calotte"))
-                {
-                    if (child.gameObject.activeSelf)
-                    {
-                        child.gameObject.SetActive(false);
-                    }
-                    else
-                    {
-                        child.gameObject.SetActive(true);
-                    }
-                }
-            }
-        }
+    //     foreach(Transform child in VisualModel2.transform.GetChild(0))
+    //     {
+    //         foreach (ModelPart i in ModelData1.Parts + ModelData2.Parts)
+    //         {
+    //             if(child.name.Contains(i.PartName) && i.PartName.Contains("Mandible"))
+    //             {
+    //                 if(child.gameObject.activeSelf)
+    //                 {
+    //                     child.gameObject.SetActive(false);
+    //                 }
+    //                 else
+    //                 {
+    //                     child.gameObject.SetActive(true);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+    // public void HideCranialVault()
+    // {
+    //     foreach (Transform child in VisualModel1.transform.GetChild(0))
+    //     {
+    //         foreach (ModelPart i in ModelData1.Parts + ModelData2.Parts)
+    //         {
+    //             if (child.name.Contains(i.PartName) && child.name.Contains("Calotte"))
+    //             {
+    //                 if (child.gameObject.activeSelf)
+    //                 {
+    //                     child.gameObject.SetActive(false);
+    //                 }
+    //                 else
+    //                 {
+    //                     child.gameObject.SetActive(true);
+    //                 }
+    //             }
+    //         }
+    //     }
         
-        foreach(Transform child in VisualModel2.transform.GetChild(0))
-        {
-            foreach (ModelPart i in ModelData.Parts)
-            {
-                if(child.name.Contains(i.PartName) && child.name.Contains("Calotte"))
-                {
-                    if(child.gameObject.activeSelf)
-                    {
-                        child.gameObject.SetActive(false);
-                    }
-                    else
-                    {
-                        child.gameObject.SetActive(true);
-                    }
-                }
-            }
-        }
-    }
+    //     foreach(Transform child in VisualModel2.transform.GetChild(0))
+    //     {
+    //         foreach (ModelPart i in ModelData1.Parts + ModelData2.Parts)
+    //         {
+    //             if(child.name.Contains(i.PartName) && child.name.Contains("Calotte"))
+    //             {
+    //                 if(child.gameObject.activeSelf)
+    //                 {
+    //                     child.gameObject.SetActive(false);
+    //                 }
+    //                 else
+    //                 {
+    //                     child.gameObject.SetActive(true);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 }

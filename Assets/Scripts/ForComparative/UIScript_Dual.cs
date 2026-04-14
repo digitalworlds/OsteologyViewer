@@ -6,15 +6,15 @@ using UnityEngine.UI;
 
 public class UIScript_Dual : MonoBehaviour
 {
+    public bool LeftViewer = true;
     public UserInput_Dual UserInput;
-    public Slider opacitySlider; // Slider for opacity adjustment
-    [SerializeField] private TextMeshProUGUI titleText1; 
-    [SerializeField] private TextMeshProUGUI titleText2;
-
+    public TextMeshProUGUI titleText;
     public RectTransform scaleBarUI; // The visual bar (e.g., a black line)
     public TextMeshProUGUI scaleLabel; // The label showing real-world length
     public float referenceLengthInMeters = 1f; // How long the bar represents, in real-world meters
     public Camera orthoCamera;
+    
+    [SerializeField] GameObject SideMenu;
 
     [SerializeField] private Animator animator;
     [SerializeField] private Animator animator2;
@@ -22,29 +22,16 @@ public class UIScript_Dual : MonoBehaviour
 
     public Dictionary<GameObject, float> Opacities = new Dictionary<GameObject, float>(); 
     public Dictionary<GameObject, bool> OffOn = new Dictionary<GameObject, bool>(); 
-    
+
     public void Start()
     {
-        //opacitySlider = GameObject.Find("Opacity").GetComponent<Slider>();
-        
-        //animator = GameObject.Find("SideMenu").GetComponent<Animator>();
-
-        scaleBarUI = GameObject.Find("Scale").GetComponent<RectTransform>();
-        scaleLabel = GameObject.Find("ScaleValue").GetComponent<TextMeshProUGUI>();
         orthoCamera = Camera.main;
-        
+
         menu = false;
     }
 
     public void Update()
     {
-        if(UserInput)
-        {
-            titleText1.text = UserInput.Name1;
-            titleText2.text = UserInput.Name2;
-        }
-        
-        ChangeOpacity();
         UpdateScaleBar();
     }
 
@@ -61,21 +48,6 @@ public class UIScript_Dual : MonoBehaviour
     public void ResetView()
     {
         UserInput.ResetView();
-    }
-
-    public void ChangeOpacity()
-    {
-        GameObject currentPart = UserInput.GetCurrentPart();
-        if (currentPart != null)
-        {
-            Renderer modelRenderer = currentPart.GetComponentInChildren<Renderer>();
-
-            bool isVisible = opacitySlider.value >= 0.5f;
-            modelRenderer.enabled = isVisible;
-
-            // Update visibility state in the dictionary
-            OffOn[currentPart] = isVisible;
-        }
     }
 
     public void SelectMenuButton()
@@ -128,5 +100,25 @@ public class UIScript_Dual : MonoBehaviour
             scaleLabel.text = $"{referenceLengthInMeters * modelScale:F2} m";
         else
             scaleLabel.text = $"{referenceLengthInMeters * modelScale * 100f:F0} cm";
+    }
+
+    public void UpdateSideMenu(GameObject selectedPart, Model ModelData)
+    {
+        if(selectedPart != null)
+            {
+            foreach (ModelPart i in ModelData.Parts)
+            {
+                if (selectedPart.name.Contains(i.PartName))
+                {
+                    SideMenu.transform.Find("Part").GetComponent<TextMeshProUGUI>().text = i.DisplayName;
+                    SideMenu.transform.Find("Details").GetComponent<TextMeshProUGUI>().text = i.PartDescription;
+                }
+            }
+            }
+            else
+            {
+                SideMenu.transform.Find("Part").GetComponent<TextMeshProUGUI>().text = "No Part Selected";
+                SideMenu.transform.Find("Details").GetComponent<TextMeshProUGUI>().text = "Click on a part to see more here!";
+            }
     }
 }
